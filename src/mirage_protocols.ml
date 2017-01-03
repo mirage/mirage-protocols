@@ -6,41 +6,26 @@ end
 module Ip = struct
   type error = [
     | `No_route of string (** can't send a message to that destination *)
-    | Ethif.error
   ]
   let pp_error ppf = function
   | `No_route s -> Fmt.pf ppf "no route to destination: %s" s
-  | #Ethif.error as e -> Ethif.pp_error ppf e
 end
 
 module Arp = struct
   type error = [
-    | Ethif.error
     | `Timeout (** Failed to establish a mapping between an IP and a link-level address *)
   ]
   let pp_error ppf = function
   | `Timeout -> Fmt.pf ppf "could not determine a link-level address for the IP address given"
-  | #Ethif.error as e -> Ethif.pp_error ppf e
-end
-
-module Icmp = struct
-  type error = Ip.error
-  let pp_error = Ip.pp_error
-end
-
-module Udp = struct
-  type error = Ip.error
-  let pp_error = Ip.pp_error
 end
 
 module Tcp = struct
-  type error = [ Ip.error | `Timeout | `Refused]
+  type error = [ `Timeout | `Refused]
   type write_error = [ error | Mirage_flow.write_error]
 
   let pp_error ppf = function
   | `Timeout -> Fmt.string ppf "connection attempt timed out"
   | `Refused -> Fmt.string ppf "connection attempt was refused"
-  | #Ip.error as e                -> Ip.pp_error ppf e
 
   let pp_write_error ppf = function
   | #Mirage_flow.write_error as e -> Mirage_flow.pp_write_error ppf e
@@ -114,7 +99,7 @@ module type ICMP = sig
   include Mirage_device.S
   type ipaddr
   type buffer
-  type error = private [> Icmp.error]
+  type error
   val pp_error: error Fmt.t
   val input : t -> src:ipaddr -> dst:ipaddr -> buffer -> unit io
   val write : t -> dst:ipaddr -> buffer -> (unit, error) result io

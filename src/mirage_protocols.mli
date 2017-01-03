@@ -60,7 +60,6 @@ end
 module Ip : sig
 
   type error = [
-    | Mirage_device.error
     | `No_route of string (** can't send a message to that destination *)
   ]
 
@@ -165,7 +164,7 @@ end
 
 (** Arp error. *)
 module Arp : sig
-  type error = [ `Timeout | Ethif.error ]
+  type error = [ `Timeout ]
   val pp_error : error Fmt.t
 end
 
@@ -225,14 +224,9 @@ module type IPV6 = sig
   include IP
 end
 
+(** No Icmp module, as there are no exposed error polymorphic variants *)
+
 (** {1 ICMP module} *)
-
-(** ICMP error. *)
-module Icmp : sig
-  type error = Ip.error
-  val pp_error : error Fmt.t
-end
-
 module type ICMP = sig
   include Mirage_device.S
 
@@ -242,7 +236,7 @@ module type ICMP = sig
   type buffer
   (** The type for buffers. *)
 
-  type error = private [> Icmp.error]
+  type error (* entirely abstract since we expose none in an Icmp module *)
   (** The type for ICMP errors. *)
 
   val pp_error: error Fmt.t
@@ -262,15 +256,13 @@ module type ICMPV4 = sig
 end
 
 (** {1 UDP stack} *)
-module Udp : sig
-  type error = Ip.error
-  val pp_error : error Fmt.t
-end
+
+(** No Udp module, as there are no exposed error polymorphic variants *)
 
 (*    A UDP stack that can send and receive datagrams. *)
 module type UDP = sig
 
-  type error
+  type error (* entirely abstract since we expose none in a Udp module *)
   (** The type for UDP errors. *)
 
   val pp_error: error Fmt.t
@@ -316,8 +308,8 @@ end
 
 (** TCP errors. *)
 module Tcp : sig
-  type error = [ Ip.error | `Timeout | `Refused]
-  type write_error = [ error | Mirage_flow.write_error]
+  type error = [ `Timeout | `Refused]
+  type write_error = [ error | Mirage_flow.write_error ]
 
   val pp_error : error Fmt.t
   val pp_write_error : write_error Fmt.t
