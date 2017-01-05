@@ -50,11 +50,31 @@ module type TCP = Mirage_protocols.TCP
   with type 'a io = 'a Lwt.t
    and type buffer = Cstruct.t
 
-(** TCP stack over IPv4 *)
+(** TCP module over IPv4 *)
 module type TCPV4 = TCP
   with type ipaddr = Ipaddr.V4.t
 
-(** TCP stack over IPv6 *)
+(** TCP module over IPv6 *)
 module type TCPV6 = TCP
   with type ipaddr = Ipaddr.V6.t
+
+(** Configuration *)
+
+type ipv4_config = {
+  address : Ipaddr.V4.t;
+  network : Ipaddr.V4.Prefix.t;
+  gateway : Ipaddr.V4.t option;
+}
+
+type ipv6_config = {
+  address : Ipaddr.V6.t list;
+  netmasks : Ipaddr.V6.Prefix.t list;
+  gateways : Ipaddr.V6.t list;
+}
+
+(** {1 DHCP client}
+ *  A client which engages in lease transactions. *)
+module type DHCP_CLIENT = sig
+  type t = ipv4_config Lwt_stream.t
+end
 
