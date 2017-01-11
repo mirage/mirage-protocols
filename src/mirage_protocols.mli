@@ -2,8 +2,6 @@
 
         {e %%VERSION%% } *)
 
-open Result
-
 (** {1 Ethernet stack}
 
     An Ethernet stack that parses frames from a network device and
