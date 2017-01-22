@@ -41,6 +41,10 @@ module type ETHIF = sig
   val mac: t -> macaddr
   (** [mac nf] is the MAC address of [nf]. *)
 
+  val mtu: t -> int
+  (** [mtu nf] is the Maximum Transmission Unit of the [nf] i.e. the maximum
+      size of the payload, not including the ethernet frame header. *)
+
   val input:
     arpv4:(buffer -> unit io) ->
     ipv4:(buffer -> unit io) ->
@@ -155,6 +159,10 @@ module type IP = sig
   (** Project a universal IP address into the version supported by the
       current implementation. Return [None] if there is a version
       mismatch. *)
+
+  val mtu: t -> int
+  (** [mtu ip] is the Maximum Transmission Unit of the [ip] i.e. the maximum
+      size of the payload, not including the IP header. *)
 
 end
 

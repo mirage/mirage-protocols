@@ -42,6 +42,7 @@ module type ETHIF = sig
   val write: t -> buffer -> (unit, error) result io
   val writev: t -> buffer list -> (unit, error) result io
   val mac: t -> macaddr
+  val mtu: t -> int
   val input:
     arpv4:(buffer -> unit io) ->
     ipv4:(buffer -> unit io) ->
@@ -72,6 +73,7 @@ module type IP = sig
   type uipaddr
   val to_uipaddr: ipaddr -> uipaddr
   val of_uipaddr: uipaddr -> ipaddr option
+  val mtu: t -> int
 end
 
 module type ARP = sig
