@@ -8,16 +8,17 @@ dev-repo:     "https://github.com/mirage/mirage-protocols.git"
 bug-reports:  "https://github.com/mirage/mirage-protocols/issues"
 tags:         ["org:mirage"]
 
-build: ["ocaml" "pkg/pkg.ml" "build" "-n" name "--pinned" "%{pinned}%" ]
+build: [
+  [ "jbuilder" "subst" ] {pinned}
+  [ "jbuilder" "build" "-p" name "-j" jobs ]
+]
 
 depends: [
-  "ocamlfind" {build}
-  "ocamlbuild" {build}
-  "topkg" {build & >= "0.8.0"}
-  "mirage-protocols" { = "1.1.0" }
+  "jbuilder" { >= "1.0+beta9" }
+  "mirage-protocols" { >= "1.1.0" }
   "ipaddr"
   "lwt"
   "cstruct" {>= "1.9.0"}
 ]
 
-available: [ ocaml-version >= "4.01.0"]
+available: [ ocaml-version >= "4.03.0"]

@@ -6,6 +6,7 @@ env:
   global:
   - PINS="mirage-protocols.1.0.0:. mirage-protocols-lwt.1.0.0:."
   - DEPOPTS="mirage-protocols-lwt"
+  - REVDEPS=true
   matrix:
   - OCAML_VERSION=4.03 PACKAGE="mirage-protocols"
   - OCAML_VERSION=4.04 PACKAGE="mirage-protocols"
