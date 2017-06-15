@@ -1,5 +1,0 @@
-true : bin_annot, safe_string, package(bytes), short_paths
-true: warn_error(+1..49+60), warn(A-4-34-41-44)
-
-true: package(mirage-device mirage-flow fmt)
-<src/mirage_protocols_lwt.*>: package(ipaddr mirage-protocols lwt cstruct)

@@ -1,7 +1,0 @@
-description = "MirageOS signatures for network protocol implementations"
-version = "%%VERSION_NUM%%"
-requires = "mirage-device mirage-flow fmt"
-archive(byte) = "mirage-protocols.cma"
-archive(native) = "mirage-protocols.cmxa"
-plugin(byte) = "mirage-protocols.cma"
-plugin(native) = "mirage-protocols.cmxs"
