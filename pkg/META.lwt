@@ -1,3 +1,0 @@
-description = "MirageOS signatures for network protocol implementations"
-version = "%%VERSION_NUM%%"
-requires = "mirage-protocols ipaddr lwt cstruct"

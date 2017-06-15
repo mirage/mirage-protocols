@@ -1,8 +1,4 @@
 _build
-tmp
-*~
-\.\#*
-\#*#
 *.install
-*.native
-*.byte
+*~
+.merlin
