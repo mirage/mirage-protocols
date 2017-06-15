@@ -14,7 +14,7 @@ uninstall:
 	jbuilder uninstall
 
 clean:
-	rm -rf _build
+	rm -rf _build *.install
 
 REPO=../../mirage/opam-repository
 PACKAGES=$(REPO)/packages
