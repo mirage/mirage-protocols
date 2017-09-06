@@ -1,3 +1,10 @@
+v1.3.0 2017-09-06
+-----------------
+
+- add support for TCP keepalives by changing the signature of the
+  `TCP.input` function
+- jbuilder is now a build dependency
+
 v1.2.0 2017-06-15
 -----------------
 
