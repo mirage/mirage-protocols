@@ -375,10 +375,6 @@ module type TCP = sig
   and type error  := error
   and type write_error := write_error
 
-  type callback = flow -> unit io
-  (** The type for application callback that receives a [flow] that it
-      can read/write to. *)
-
   val dst: flow -> ipaddr * int
   (** Get the destination IPv4 address and destination port that a
       flow is currently connected to. *)

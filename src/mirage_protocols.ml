@@ -147,7 +147,6 @@ module type TCP = sig
   and type error  := error
   and type write_error := write_error
 
-  type callback = flow -> unit io
   val dst: flow -> ipaddr * int
   val write_nodelay: flow -> buffer -> (unit, write_error) result io
   val writev_nodelay: flow -> buffer list -> (unit, write_error) result io
