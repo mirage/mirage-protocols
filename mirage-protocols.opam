@@ -18,6 +18,7 @@ depends: [
   "mirage-device"
   "mirage-flow"
   "fmt"
+  "duration"
 ]
 
 available: [ ocaml-version >= "4.03.0"]

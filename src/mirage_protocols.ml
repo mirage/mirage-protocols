@@ -123,6 +123,14 @@ module type UDP = sig
     (unit, error) result io
 end
 
+module Keepalive = struct
+  type t = {
+    after: Duration.t;
+    interval: Duration.t;
+    probes: int;
+  }
+end
+
 module type TCP = sig
   type error = private [> Tcp.error]
   type write_error = private [> Tcp.write_error]
@@ -139,10 +147,13 @@ module type TCP = sig
   and type error  := error
   and type write_error := write_error
 
-  type callback = flow -> unit io
   val dst: flow -> ipaddr * int
   val write_nodelay: flow -> buffer -> (unit, write_error) result io
   val writev_nodelay: flow -> buffer list -> (unit, write_error) result io
-  val create_connection: t -> ipaddr * int -> (flow, error) result io
-  val input: t -> listeners:(int -> callback option) -> ipinput
+  val create_connection: ?keepalive:Keepalive.t -> t -> ipaddr * int -> (flow, error) result io
+  type listener = {
+    process: flow -> unit io;
+    keepalive: Keepalive.t option;
+  }
+  val input: t -> listeners:(int -> listener option) -> ipinput
 end

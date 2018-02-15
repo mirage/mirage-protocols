@@ -321,6 +321,22 @@ module Tcp : sig
   val pp_write_error : write_error Fmt.t
 end
 
+(** Configuration for TCP keep-alives.
+    Keep-alive messages are probes sent on an idle connection. If no traffic
+    is received after a certain number of probes are sent, then the connection
+    is assumed to have been lost. *)
+module Keepalive: sig
+  type t = {
+    after: Duration.t;    (** initial delay before sending probes on an idle
+                              connection *)
+    interval: Duration.t; (** interval between successive probes *)
+    probes: int;          (** total number of probes to send before assuming
+                              that, if the connection is still idle it has
+                              been lost *)
+  }
+  (** Configuration for TCP keep-alives *)
+end
+
 (** A TCP stack that can send and receive reliable streams using the
     TCP protocol. *)
 module type TCP = sig
@@ -359,10 +375,6 @@ module type TCP = sig
   and type error  := error
   and type write_error := write_error
 
-  type callback = flow -> unit io
-  (** The type for application callback that receives a [flow] that it
-      can read/write to. *)
-
   val dst: flow -> ipaddr * int
   (** Get the destination IPv4 address and destination port that a
       flow is currently connected to. *)
@@ -383,13 +395,35 @@ module type TCP = sig
       Note that this API will change in a future revision to be a
       per-flow attribute instead of a separately exposed function. *)
 
-  val create_connection: t -> ipaddr * int -> (flow, error) result io
-  (** [create_connection t (addr,port)] opens a TCPv4 connection
-      to the specified endpoint. *)
+  val create_connection: ?keepalive:Keepalive.t -> t -> ipaddr * int -> (flow, error) result io
+  (** [create_connection ~keepalive t (addr,port)] opens a TCPv4 connection
+      to the specified endpoint.
 
-  val input: t -> listeners:(int -> callback option) -> ipinput
-  (** [input t listeners] defines a mapping of threads that are
-      willing to accept new flows on a given port.  If the [callback]
-      returns [None], the input function will return an RST to refuse
-      connections on a port. *)
+      If the optional argument [?keepalive] is provided then TCP keep-alive
+      messages will be sent to the server when the connection is idle. If
+      no responses are received then eventually the connection will be disconnected:
+      [read] will return [Ok `Eof] and write will return [Error `Closed] *)
+
+  type listener = {
+    process: flow -> unit io; (** process a connected flow *)
+    keepalive: Keepalive.t option; (** optional TCP keepalive configuration *)
+  }
+  (** A TCP listener on a particular port *)
+
+  val input: t -> listeners:(int -> listener option) -> ipinput
+  (** [input t listeners] returns an input function continuation to be
+      passed to the underlying {!IP} stack.
+
+      When the stack receives a TCP SYN (i.e. a connection request) to a
+      particular [port], it will evaluate [listeners port]:
+
+      - If [listeners port] is [None], the input function will return an RST
+        to refuse the connection.
+      - If [listeners port] is [Some listener] then the connection will be
+        accepted and the resulting flow will be processed by [listener.process].
+        If [listener.keepalive] is [Some configuration] then the TCP keep-alive
+        [configuration] will be applied before calling [listener.process].
+  *)
+
+
 end
