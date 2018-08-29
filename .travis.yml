@@ -5,7 +5,7 @@ script: bash -ex .travis-opam.sh
 env:
   global:
   - EXTRA_REMOTES="https://github.com/mirage/mirage-dev.git"
-  - PINS="mirage-protocols:. mirage-protocols-lwt:."
+  - PINS="mirage-protocols:. mirage-protocols-lwt:. tcpip:https://github.com/hannesm/mirage-tcpip.git#less-types"
   - DEPOPTS="mirage-protocols-lwt"
   - REVDEPS=true
   matrix:
