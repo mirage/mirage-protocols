@@ -80,14 +80,8 @@ module type IP = sig
   type buffer
     (** The type for memory buffers. *)
 
-  type ethif
-  (** The type for ethernet devices. *)
-
   type ipaddr
   (** The type for IP addresses. *)
-
-  type prefix
-  (** The type for IP prefixes. *)
 
   include Mirage_device.S
 

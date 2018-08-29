@@ -53,9 +53,7 @@ module type IP = sig
   type error = private [> Ip.error]
   val pp_error: error Fmt.t
   type buffer
-  type ethif
   type ipaddr
-  type prefix
   include Mirage_device.S
   type callback = src:ipaddr -> dst:ipaddr -> buffer -> unit io
   val input:
