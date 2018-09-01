@@ -23,9 +23,6 @@ module type ETHIF = sig
   type buffer
   (** The type for memory buffers. *)
 
-  type netif
-  (** The type for ethernet network interfaces. *)
-
   type macaddr
   (** The type for unique MAC identifiers. *)
 
@@ -271,9 +268,6 @@ module type UDP = sig
   type buffer
   (** The type for memory buffers. *)
 
-  type ip
-  (** The type for IPv4/6 stacks for this stack to connect to. *)
-
   type ipaddr
   (** The type for an IP address representations. *)
 
@@ -343,9 +337,6 @@ module type TCP = sig
 
   type buffer
   (** The type for memory buffers. *)
-
-  type ip
-  (** The type for IPv4 stacks for this stack to connect to. *)
 
   type ipaddr
   (** The type for IP address representations. *)
