@@ -1,4 +1,4 @@
-module type ETHIF = Mirage_protocols.ETHIF
+module type ETHERNET = Mirage_protocols.ETHERNET
   with type 'a io = 'a Lwt.t
    and type buffer = Cstruct.t
    and type macaddr = Macaddr.t

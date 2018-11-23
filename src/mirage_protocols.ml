@@ -1,6 +1,17 @@
-module Ethif = struct
+module Ethernet = struct
   type error = Mirage_device.error
   let pp_error = Mirage_device.pp_error
+  module Proto = struct
+    type t = [ `ARP | `IPv4 | `IPv6 ]
+    let pp ppf = function
+      | `ARP -> Fmt.string ppf "ARP"
+      | `IPv4 -> Fmt.string ppf "IPv4"
+      | `IPv6 -> Fmt.string ppf "IPv6"
+    let compare a b = match a, b with
+      | `ARP, `ARP -> 0 | `ARP, _ -> 1 | _, `ARP -> -1
+      | `IPv4, `IPv4 -> 0 | `IPv4, _ -> 1 | _, `IPv4 -> -1
+      | `IPv6, `IPv6 -> 0
+  end
 end
 
 module Ip = struct
@@ -8,7 +19,19 @@ module Ip = struct
     | `No_route of string (** can't send a message to that destination *)
   ]
   let pp_error ppf = function
-  | `No_route s -> Fmt.pf ppf "no route to destination: %s" s
+    | `No_route s -> Fmt.pf ppf "no route to destination: %s" s
+
+  module Proto = struct
+    type t = [ `ICMP | `UDP | `TCP ]
+    let pp ppf = function
+      | `ICMP -> Fmt.string ppf "ICMP"
+      | `UDP -> Fmt.string ppf "UDP"
+      | `TCP -> Fmt.string ppf "TCP"
+    let compare a b = match a, b with
+      | `ICMP, `ICMP -> 0 | `ICMP, _ -> 1 | _, `ICMP -> -1
+      | `UDP, `UDP -> 0 | `UDP, _ -> 1 | _, `UDP -> -1
+      | `TCP, `TCP -> 0
+  end
 end
 
 module Arp = struct
@@ -32,21 +55,20 @@ module Tcp = struct
   | #error as e                   -> pp_error ppf e
 end
 
-module type ETHIF = sig
-  type error = private [> Ethif.error]
+module type ETHERNET = sig
+  type error = private [> Ethernet.error]
   val pp_error: error Fmt.t
   type buffer
   type macaddr
   include Mirage_device.S
-  val write: t -> buffer -> (unit, error) result io
-  val writev: t -> buffer list -> (unit, error) result io
+  val write: t -> Ethernet.Proto.t -> ?source:macaddr -> macaddr -> buffer -> (unit, error) result io
   val mac: t -> macaddr
   val mtu: t -> int
-  val input:
-    arpv4:(buffer -> unit io) ->
-    ipv4:(buffer -> unit io) ->
-    ipv6:(buffer -> unit io) ->
-    t -> buffer -> unit io
+  val allocate_frame: ?size:int -> t -> buffer * int
+  type callback = source:macaddr -> macaddr -> buffer -> unit io
+  val input: t -> (Ethernet.Proto.t -> callback) -> buffer -> unit io
+  val register: t -> Ethernet.Proto.t -> callback -> (unit, [ `Conflict ]) result
+  val header_size: t -> int
 end
 module type IP = sig
   type error = private [> Ip.error]
@@ -55,14 +77,11 @@ module type IP = sig
   type ipaddr
   include Mirage_device.S
   type callback = src:ipaddr -> dst:ipaddr -> buffer -> unit io
-  val input:
-    t ->
-    tcp:callback -> udp:callback -> default:(proto:int -> callback) ->
-    buffer -> unit io
-  val allocate_frame: t -> dst:ipaddr -> proto:[`ICMP | `TCP | `UDP] -> buffer * int
+  val register: t -> Ip.Proto.t -> callback -> (unit, [ `Conflict ]) result
+  val input: t -> (Ip.Proto.t -> callback) -> buffer -> unit io
+  val allocate_frame: t -> dst:ipaddr -> proto:Ip.Proto.t -> buffer * int
   val write: t -> buffer -> buffer -> (unit, error) result io
   val writev: t -> buffer -> buffer list -> (unit, error) result io
-  val checksum: buffer -> buffer list -> int
   val pseudoheader : t -> dst:ipaddr -> proto:[< `TCP | `UDP ] -> int -> buffer
   val src: t -> dst:ipaddr -> ipaddr
   val set_ip: t -> ipaddr -> unit io
