@@ -16,7 +16,8 @@ build: [
 depends: [
   "jbuilder" {build & >= "1.0+beta9"}
   "mirage-protocols" {>= "1.4.0"}
-  "ipaddr" {>= "2.0.0"}
+  "ipaddr" {>= "3.0.0"}
+  "macaddr"
   "lwt"
   "cstruct" {>= "1.9.0"}
 ]
