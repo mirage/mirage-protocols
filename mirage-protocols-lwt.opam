@@ -4,7 +4,7 @@ authors:      ["Mindy Preston <meetup@yomimono.org>"]
 homepage:     "https://github.com/mirage/mirage-protocols"
 doc:          "https://mirage.github.io/mirage-protocols/"
 license:      "ISC"
-dev-repo:     "https://github.com/mirage/mirage-protocols.git"
+dev-repo:     "git+https://github.com/mirage/mirage-protocols.git"
 bug-reports:  "https://github.com/mirage/mirage-protocols/issues"
 tags:         ["org:mirage"]
 
