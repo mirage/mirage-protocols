@@ -1,3 +1,7 @@
+### v1.4.1 2019-01-10
+
+- ipaddr3 compatibility
+
 ### v1.4.0 2018-09-15
 
 - remove unused types, since `connect` no longer in signatures (since Mirage3)
