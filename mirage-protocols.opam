@@ -18,6 +18,7 @@ depends: [
   "jbuilder" {build & >="1.0+beta9"}
   "mirage-device" {>= "1.0.0"}
   "mirage-flow" {>= "1.2.0"}
+  "mirage-net" {>= "2.0.0"}
   "fmt"
   "duration"
 ]

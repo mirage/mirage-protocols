@@ -1,6 +1,12 @@
 module Ethif = struct
-  type error = Mirage_device.error
-  let pp_error = Mirage_device.pp_error
+  type error = Mirage_net.Net.error
+  let pp_error = Mirage_net.Net.pp_error
+
+  type proto = [ `ARP | `IPv4 | `IPv6 ]
+  let pp_proto ppf = function
+    | `ARP -> Fmt.string ppf "ARP"
+    | `IPv4 -> Fmt.string ppf "IPv4"
+    | `IPv6 -> Fmt.string ppf "IPv6"
 end
 
 module Ip = struct
@@ -8,7 +14,13 @@ module Ip = struct
     | `No_route of string (** can't send a message to that destination *)
   ]
   let pp_error ppf = function
-  | `No_route s -> Fmt.pf ppf "no route to destination: %s" s
+    | `No_route s -> Fmt.pf ppf "no route to destination: %s" s
+
+  type proto = [ `TCP | `UDP | `ICMP ]
+  let pp_proto ppf = function
+    | `TCP -> Fmt.string ppf "TCP"
+    | `UDP -> Fmt.string ppf "UDP"
+    | `ICMP -> Fmt.string ppf "ICMP"
 end
 
 module Arp = struct
@@ -38,8 +50,8 @@ module type ETHIF = sig
   type buffer
   type macaddr
   include Mirage_device.S
-  val write: t -> buffer -> (unit, error) result io
-  val writev: t -> buffer list -> (unit, error) result io
+  val write: t -> ?src:macaddr -> macaddr -> Ethif.proto -> ?size:int ->
+    (buffer -> int) -> (unit, error) result io
   val mac: t -> macaddr
   val mtu: t -> int
   val input:
@@ -59,11 +71,10 @@ module type IP = sig
     t ->
     tcp:callback -> udp:callback -> default:(proto:int -> callback) ->
     buffer -> unit io
-  val allocate_frame: t -> dst:ipaddr -> proto:[`ICMP | `TCP | `UDP] -> buffer * int
-  val write: t -> buffer -> buffer -> (unit, error) result io
-  val writev: t -> buffer -> buffer list -> (unit, error) result io
-  val checksum: buffer -> buffer list -> int
-  val pseudoheader : t -> dst:ipaddr -> proto:[< `TCP | `UDP ] -> int -> buffer
+  val write: t -> ?fragment:bool -> ?ttl:int ->
+    ?src:ipaddr -> ipaddr -> Ip.proto -> ?size:int -> (buffer -> int) ->
+    buffer list -> (unit, error) result io
+  val pseudoheader : t -> ?src:ipaddr -> ipaddr -> Ip.proto -> int -> buffer
   val src: t -> dst:ipaddr -> ipaddr
   val set_ip: t -> ipaddr -> unit io
   val get_ip: t -> ipaddr list
