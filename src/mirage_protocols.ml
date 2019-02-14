@@ -1,6 +1,7 @@
 module Ethif = struct
-  type error = Mirage_net.Net.error
-  let pp_error = Mirage_net.Net.pp_error
+  type error = [ `Exceeds_mtu ]
+  let pp_error ppf = function
+    | `Exceeds_mtu -> Fmt.string ppf "exceeds MTU"
 
   type proto = [ `ARP | `IPv4 | `IPv6 ]
   let pp_proto ppf = function

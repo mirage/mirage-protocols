@@ -8,7 +8,7 @@
     can associate them with IP address via ARP. *)
 
 module Ethif : sig
-  type error = Mirage_net.Net.error
+  type error = [ `Exceeds_mtu ]
   val pp_error: error Fmt.t
 
   type proto = [ `ARP | `IPv4 | `IPv6 ]
@@ -35,8 +35,8 @@ module type ETHIF = sig
     (buffer -> int) -> (unit, error) result io
   (** [write eth ~src dst proto ~size payload] outputs an ethernet frame which
      header is filled by [eth], and its payload is the buffer from the call to
-     [payload], which gets a buffer of [size] to fill with their payload. If
-     [size] exceeds {!mtu}, an error is returned. *)
+     [payload]. [Payload] gets a buffer of [size] (defaults to mtu) to fill with
+     their payload. If [size] exceeds {!mtu}, an error is returned. *)
 
   val mac: t -> macaddr
   (** [mac eth] is the MAC address of [eth]. *)
