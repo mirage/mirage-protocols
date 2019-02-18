@@ -2,12 +2,9 @@
 
         {e %%VERSION%% } *)
 
-(** {1 Ethernet stack}
+(** {2 Ethernet layer} *)
 
-    An Ethernet stack that parses frames from a network device and
-    can associate them with IP address via ARP. *)
-
-module Ethif : sig
+module Ethernet : sig
   type error = [ `Exceeds_mtu ]
   val pp_error: error Fmt.t
 
@@ -15,9 +12,15 @@ module Ethif : sig
   val pp_proto: proto Fmt.t
 end
 
-module type ETHIF = sig
+(** Ethernet (IEEE 802.3) is a widely used data link layer. The hardware is
+   usually a twisted pair or fibre connection, on the software side it consists
+   of an Ethernet header where source and destination mac addresses, and a type
+   field, indicating the type of the next layer, are present. The Ethernet layer
+   consists of network card mac address and MTU information, and provides
+   decapsulation and encapsulation. *)
+module type ETHERNET = sig
 
-  type error = private [> Ethif.error]
+  type error = private [> Ethernet.error]
   (** The type for ethernet interface errors. *)
 
   val pp_error: error Fmt.t
@@ -31,7 +34,7 @@ module type ETHIF = sig
 
   include Mirage_device.S
 
-  val write: t -> ?src:macaddr -> macaddr -> Ethif.proto -> ?size:int ->
+  val write: t -> ?src:macaddr -> macaddr -> Ethernet.proto -> ?size:int ->
     (buffer -> int) -> (unit, error) result io
   (** [write eth ~src dst proto ~size payload] outputs an ethernet frame which
      header is filled by [eth], and its payload is the buffer from the call to
@@ -54,7 +57,7 @@ module type ETHIF = sig
       it depending on the protocol to the callback. *)
 end
 
-(** {1 IP stack} *)
+(** {2 IP stack} *)
 
 (** IP errors. *)
 module Ip : sig
@@ -69,7 +72,9 @@ module Ip : sig
   val pp_proto: proto Fmt.t
 end
 
-(** An IP stack that parses Ethernet frames into IP packets *)
+(** An Internet Protocol (IP) stack reassembles IP fragments into packets,
+   removes the IP header, and on the sending side fragments overlong payload
+   and inserts IP headers. *)
 module type IP = sig
 
   type error = private [> Ip.error]
@@ -155,7 +160,7 @@ module type IP = sig
 
 end
 
-(** {1 ARP} *)
+(** {2 ARP} *)
 
 (** Arp error. *)
 module Arp : sig
@@ -209,19 +214,19 @@ module type ARP = sig
   val input : t -> buffer -> unit io
 end
 
-(** {1 IPv4 stack} *)
+(** {2 IPv4 stack} *)
 module type IPV4 = sig
   include IP
 end
 
-(** {1 IPv6 stack} *)
+(** {2 IPv6 stack} *)
 module type IPV6 = sig
   include IP
 end
 
 (** No Icmp module, as there are no exposed error polymorphic variants *)
 
-(** {1 ICMP module} *)
+(** {2 ICMP module} *)
 module type ICMP = sig
   include Mirage_device.S
 
@@ -250,7 +255,7 @@ module type ICMPV4 = sig
   include ICMP
 end
 
-(** {1 UDP stack} *)
+(** {2 UDP stack} *)
 
 (** No Udp module, as there are no exposed error polymorphic variants *)
 
@@ -296,7 +301,7 @@ module type UDP = sig
 
 end
 
-(** {1 TCP stack} *)
+(** {2 TCP stack} *)
 
 (** TCP errors. *)
 module Tcp : sig

@@ -1,4 +1,4 @@
-module Ethif = struct
+module Ethernet = struct
   type error = [ `Exceeds_mtu ]
   let pp_error ppf = function
     | `Exceeds_mtu -> Fmt.string ppf "exceeds MTU"
@@ -45,13 +45,13 @@ module Tcp = struct
   | #error as e                   -> pp_error ppf e
 end
 
-module type ETHIF = sig
-  type error = private [> Ethif.error]
+module type ETHERNET = sig
+  type error = private [> Ethernet.error]
   val pp_error: error Fmt.t
   type buffer
   type macaddr
   include Mirage_device.S
-  val write: t -> ?src:macaddr -> macaddr -> Ethif.proto -> ?size:int ->
+  val write: t -> ?src:macaddr -> macaddr -> Ethernet.proto -> ?size:int ->
     (buffer -> int) -> (unit, error) result io
   val mac: t -> macaddr
   val mtu: t -> int
