@@ -1,19 +1,23 @@
+(** Ethernet *)
 module type ETHERNET = Mirage_protocols.ETHERNET
   with type 'a io = 'a Lwt.t
    and type buffer = Cstruct.t
    and type macaddr = Macaddr.t
 
+(** ARP *)
 module type ARP = Mirage_protocols.ARP
   with type 'a io = 'a Lwt.t
    and type buffer = Cstruct.t
    and type ipaddr = Ipaddr.V4.t
    and type macaddr = Macaddr.t
 
+(** IP *)
 module type IP = Mirage_protocols.IP
   with type 'a io = 'a Lwt.t
    and type buffer = Cstruct.t
    and type uipaddr = Ipaddr.t
 
+(** IPv4 stack *)
 module type IPV4 = IP
   with type ipaddr = Ipaddr.V4.t
 
@@ -57,7 +61,6 @@ module type TCPV6 = TCP
   with type ipaddr = Ipaddr.V6.t
 
 (** Configuration *)
-
 type ipv4_config = {
   address : Ipaddr.V4.t;
   network : Ipaddr.V4.Prefix.t;
@@ -70,7 +73,7 @@ type ipv6_config = {
   gateways : Ipaddr.V6.t list;
 }
 
-(** {1 DHCP client}
+(** {2 DHCP client}
  *  A client which engages in lease transactions. *)
 module type DHCP_CLIENT = sig
   type t = ipv4_config Lwt_stream.t
