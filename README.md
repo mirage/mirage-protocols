@@ -4,7 +4,7 @@ mirage-protocols provides a set of module types which libraries intended to be u
 
 The set of protocols defined is:
 
-[Mirage_protocols.ETHIF](ethif) and [Mirage_protocols_lwt.ETHIF](ethif-lwt)
+[Mirage_protocols.ETHERNET](ethernet) and [Mirage_protocols_lwt.ETHERNET](ethernet-lwt)
 [Mirage_protocols.ARP](arp) and [Mirage_protocols_lwt.ARP](arp-lwt)
 [Mirage_protocols.IP](ip) and [Mirage_protocols_lwt.IP](ip-lwt), via [Mirage_protocols_lwt.IPV4](ipv4-lwt) and [Mirage_protocols_lwt.IPV6](ipv6-lwt)
 [Mirage_protocols.ICMP](icmp) and [Mirage_protocols_lwt.ICMP](icmp-lwt), via [Mirage_protocols_lwt.ICMPV4](icmpv4-lwt)

@@ -23,3 +23,10 @@ depends: [
   "cstruct" {>= "1.9.0"}
 ]
 synopsis: "MirageOS signatures for network protocols"
+description: """
+mirage-protocols-lwt provides a set of module types specialized to lwt which
+libraries intended to be used as MirageOS network implementations should
+implement.
+
+The current signatures are: ETHERNET, ARP, IP, ICMP, UDP, TCP
+"""

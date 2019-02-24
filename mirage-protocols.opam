@@ -23,3 +23,9 @@ depends: [
   "duration"
 ]
 synopsis: "MirageOS signatures for network protocols"
+description: """
+mirage-protocols provides a set of module types which libraries intended to
+be used as MirageOS network implementations should implement.
+
+The current signatures are: ETHERNET, ARP, IP, ICMP, UDP, TCP.
+"""
