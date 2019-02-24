@@ -8,8 +8,11 @@
     can associate them with IP address via ARP. *)
 
 module Ethif : sig
-  type error = Mirage_device.error
-  val pp_error : error Fmt.t
+  type error = [ `Exceeds_mtu ]
+  val pp_error: error Fmt.t
+
+  type proto = [ `ARP | `IPv4 | `IPv6 ]
+  val pp_proto: proto Fmt.t
 end
 
 module type ETHIF = sig
@@ -28,29 +31,27 @@ module type ETHIF = sig
 
   include Mirage_device.S
 
-  val write: t -> buffer -> (unit, error) result io
-  (** [write nf buf] outputs [buf] to netfront [nf]. *)
-
-  val writev: t -> buffer list -> (unit, error) result io
-  (** [writev nf bufs] output a list of buffers to netfront [nf] as a
-      single packet. *)
+  val write: t -> ?src:macaddr -> macaddr -> Ethif.proto -> ?size:int ->
+    (buffer -> int) -> (unit, error) result io
+  (** [write eth ~src dst proto ~size payload] outputs an ethernet frame which
+     header is filled by [eth], and its payload is the buffer from the call to
+     [payload]. [Payload] gets a buffer of [size] (defaults to mtu) to fill with
+     their payload. If [size] exceeds {!mtu}, an error is returned. *)
 
   val mac: t -> macaddr
-  (** [mac nf] is the MAC address of [nf]. *)
+  (** [mac eth] is the MAC address of [eth]. *)
 
   val mtu: t -> int
-  (** [mtu nf] is the Maximum Transmission Unit of the [nf] i.e. the maximum
-      size of the payload, not including the ethernet frame header. *)
+  (** [mtu eth] is the Maximum Transmission Unit of the [eth] i.e. the maximum
+      size of the payload, excluding the ethernet frame header. *)
 
   val input:
     arpv4:(buffer -> unit io) ->
     ipv4:(buffer -> unit io) ->
     ipv6:(buffer -> unit io) ->
     t -> buffer -> unit io
-  (** [listen nf fn] is a blocking operation that calls [fn buf]
-      with every packet that is read from the interface.
-      The function can be stopped by calling [disconnect]
-      in the device layer. *)
+  (** [input ~arpv4 ~ipv4 ~ipv6 eth buffer] decodes the buffer and demultiplexes
+      it depending on the protocol to the callback. *)
 end
 
 (** {1 IP stack} *)
@@ -63,6 +64,9 @@ module Ip : sig
   ]
 
   val pp_error : error Fmt.t
+
+  type proto = [ `TCP | `UDP | `ICMP ]
+  val pp_proto: proto Fmt.t
 end
 
 (** An IP stack that parses Ethernet frames into IP packets *)
@@ -100,27 +104,21 @@ module type IP = sig
       header and passes the result onto either the [tcp] or [udp]
       function, or the [default] function for unknown IP protocols. *)
 
-  val allocate_frame: t -> dst:ipaddr -> proto:[`ICMP | `TCP | `UDP] -> buffer * int
-  (** [allocate_frame t ~dst ~proto] returns a pair [(pkt, len)] such that
-      [Cstruct.sub pkt 0 len] is the IP header (including the link layer part) of a
-      packet going to [dst] for protocol [proto].  The space in [pkt] after the
-      first [len] bytes can be used by the client. *)
+  val write: t -> ?fragment:bool -> ?ttl:int ->
+    ?src:ipaddr -> ipaddr -> Ip.proto -> ?size:int -> (buffer -> int) ->
+    buffer list -> (unit, error) result io
+  (** [write t ~fragment ~ttl ~src dst proto ~size headerf payload] allocates a
+     buffer, writes the IP header, and calls the headerf function. This may
+     write to the provided buffer of [size] (default 0). If [size + ip header]
+     exceeds the maximum transfer unit, an error is returned. The [payload] is
+     appended. The optional [fragment] argument defaults to [true], in which
+     case multiple IP-fragmented frames are sent if the payload is too big for a
+     single frame. When it is [false], the don't fragment bit is set and if the
+     payload and header would exceed the maximum transfer unit, an error is
+     returned. *)
 
-  val write: t -> buffer -> buffer -> (unit, error) result io
-  (** [write t frame buf] writes the packet [frame :: buf :: []] to
-      the address [dst]. *)
-
-  val writev: t -> buffer -> buffer list -> (unit, error) result io
-  (** [writev t frame bufs] writes the packet [frame :: bufs]. *)
-
-  val checksum: buffer -> buffer list -> int
-  (** [checksum frame bufs] computes the IP checksum of [bufs]
-      computing the pseudo-header from the actual header [frame].  It
-      assumes that frame is of the form returned by [allocate_frame],
-      i.e., that it contains the link-layer part. *)
-
-  val pseudoheader : t -> dst:ipaddr -> proto:[< `TCP | `UDP ] -> int -> buffer
-  (** [pseudoheader t dst proto len] gives a pseudoheader suitable for use in
+  val pseudoheader : t -> ?src:ipaddr -> ipaddr -> Ip.proto -> int -> buffer
+  (** [pseudoheader t ~src dst proto len] gives a pseudoheader suitable for use in
       TCP or UDP checksum calculation based on [t]. *)
 
   val src: t -> dst:ipaddr -> ipaddr

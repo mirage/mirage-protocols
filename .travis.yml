@@ -4,7 +4,7 @@ install: wget https://raw.githubusercontent.com/ocaml/ocaml-ci-scripts/master/.t
 script: bash -ex .travis-opam.sh
 env:
   global:
-  - EXTRA_REMOTES="https://github.com/mirage/mirage-dev.git"
+  - EXTRA_REMOTES="https://github.com/mirage/mirage-dev.git#layering"
   - PINS="mirage-protocols:. mirage-protocols-lwt:."
   - DEPOPTS="mirage-protocols-lwt"
   - REVDEPS=true
