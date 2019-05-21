@@ -66,6 +66,7 @@ module type IP = sig
   val pp_error: error Fmt.t
   type buffer
   type ipaddr
+  val pp_ipaddr : ipaddr Fmt.t
   include Mirage_device.S
   type callback = src:ipaddr -> dst:ipaddr -> buffer -> unit io
   val input:
@@ -79,9 +80,6 @@ module type IP = sig
   val src: t -> dst:ipaddr -> ipaddr
   val set_ip: t -> ipaddr -> unit io
   val get_ip: t -> ipaddr list
-  type uipaddr
-  val to_uipaddr: ipaddr -> uipaddr
-  val of_uipaddr: uipaddr -> ipaddr option
   val mtu: t -> int
 end
 

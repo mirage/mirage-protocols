@@ -84,10 +84,13 @@ module type IP = sig
   (** [pp_error] is the pretty-printer for errors. *)
 
   type buffer
-    (** The type for memory buffers. *)
+  (** The type for memory buffers. *)
 
   type ipaddr
   (** The type for IP addresses. *)
+
+  val pp_ipaddr : ipaddr Fmt.t
+  (** [pp_ipaddr] is the pretty-printer for IP addresses. *)
 
   include Mirage_device.S
 
@@ -140,19 +143,6 @@ module type IP = sig
   (** Get the IP addresses associated with this interface. For IPv4, only
    *  one IP address can be set at a time, so the list will always be of
    *  length 1 (and may be the default value, 0.0.0.0). *)
-
-  type uipaddr
-  (** The type for universal IP addresses. It supports all the
-      possible versions. *)
-
-  val to_uipaddr: ipaddr -> uipaddr
-  (** Convert an IP address with a specific version (eg. V4) into a
-      universal IP address. *)
-
-  val of_uipaddr: uipaddr -> ipaddr option
-  (** Project a universal IP address into the version supported by the
-      current implementation. Return [None] if there is a version
-      mismatch. *)
 
   val mtu: t -> int
   (** [mtu ip] is the Maximum Transmission Unit of the [ip] i.e. the maximum
