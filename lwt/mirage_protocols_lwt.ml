@@ -15,7 +15,6 @@ module type ARP = Mirage_protocols.ARP
 module type IP = Mirage_protocols.IP
   with type 'a io = 'a Lwt.t
    and type buffer = Cstruct.t
-   and type uipaddr = Ipaddr.t
 
 (** IPv4 stack *)
 module type IPV4 = IP
