@@ -13,3 +13,4 @@ env:
   - OCAML_VERSION=4.05 PACKAGE="mirage-protocols"
   - OCAML_VERSION=4.06 PACKAGE="mirage-protocols"
   - OCAML_VERSION=4.07 PACKAGE="mirage-protocols"
+  - OCAML_VERSION=4.08 PACKAGE="mirage-protocols"
