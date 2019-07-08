@@ -1,3 +1,9 @@
+### v3.0.0 (2019-07-18)
+
+- replace `uipaddr` with `pp_ipaddr`, since the only use is to print
+  human-readable IP addresses (#18 @yomimono @linse)
+- port to dune from jbuilder (#17 @hannesm)
+
 ### v2.0.0 (2019-02-24)
 
 - Ethif/ETHIF renamed to Ethernet/ETHERNET (#16)
