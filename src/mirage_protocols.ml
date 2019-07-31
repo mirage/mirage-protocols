@@ -13,9 +13,11 @@ end
 module Ip = struct
   type error = [
     | `No_route of string (** can't send a message to that destination *)
+    | `Would_fragment
   ]
   let pp_error ppf = function
     | `No_route s -> Fmt.pf ppf "no route to destination: %s" s
+    | `Would_fragment -> Fmt.string ppf "would fragment"
 
   type proto = [ `TCP | `UDP | `ICMP ]
   let pp_proto ppf = function

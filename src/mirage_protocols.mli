@@ -64,6 +64,7 @@ module Ip : sig
 
   type error = [
     | `No_route of string (** can't send a message to that destination *)
+    | `Would_fragment (** would need to fragment, but fragmentation is disabled *)
   ]
 
   val pp_error : error Fmt.t
