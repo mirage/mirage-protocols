@@ -113,7 +113,7 @@ module type ICMP = sig
   type error
   val pp_error: error Fmt.t
   val input : t -> src:ipaddr -> dst:ipaddr -> buffer -> unit io
-  val write : t -> dst:ipaddr -> buffer -> (unit, error) result io
+  val write : t -> dst:ipaddr -> ?ttl:int -> buffer -> (unit, error) result io
 end
 
 module type ICMPV4 = ICMP
@@ -127,7 +127,7 @@ module type UDP = sig
   include Mirage_device.S
   type callback = src:ipaddr -> dst:ipaddr -> src_port:int -> buffer -> unit io
   val input: listeners:(dst_port:int -> callback option) -> t -> ipinput
-  val write: ?src_port:int -> dst:ipaddr -> dst_port:int -> t -> buffer ->
+  val write: ?src_port:int -> ?ttl:int -> dst:ipaddr -> dst_port:int -> t -> buffer ->
     (unit, error) result io
 end
 
