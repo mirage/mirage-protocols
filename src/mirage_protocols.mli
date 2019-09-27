@@ -283,7 +283,7 @@ module type UDP = sig
       return a concrete handler or a [None], which results in the
       datagram being dropped. *)
 
-  val write: ?src_port:int -> dst:ipaddr -> dst_port:int -> t -> buffer ->
+  val write: ?src_port:int -> ?ttl:int -> dst:ipaddr -> dst_port:int -> t -> buffer ->
     (unit, error) result io
   (** [write ~src_port ~dst ~dst_port udp data] is a thread
       that writes [data] from an optional [src_port] to a [dst]

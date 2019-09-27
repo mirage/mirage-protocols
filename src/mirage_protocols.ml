@@ -125,7 +125,7 @@ module type UDP = sig
   include Mirage_device.S
   type callback = src:ipaddr -> dst:ipaddr -> src_port:int -> buffer -> unit io
   val input: listeners:(dst_port:int -> callback option) -> t -> ipinput
-  val write: ?src_port:int -> dst:ipaddr -> dst_port:int -> t -> buffer ->
+  val write: ?src_port:int -> ?ttl:int -> dst:ipaddr -> dst_port:int -> t -> buffer ->
     (unit, error) result io
 end
 
