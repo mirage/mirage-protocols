@@ -237,7 +237,7 @@ module type ICMP = sig
       [buffer]. *)
 
   val write : t -> dst:ipaddr -> ?ttl:int -> buffer -> (unit, error) result io
-  (** [write t dst ?ttl buffer] sends the ICMP message in [buffer] to [dst]
+  (** [write t dst ~ttl buffer] sends the ICMP message in [buffer] to [dst]
       over IP. Passes [ttl] to the IP stack if given. *)
 end
 
