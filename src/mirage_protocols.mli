@@ -238,7 +238,7 @@ module type ICMP = sig
 
   val write : t -> dst:ipaddr -> ?ttl:int -> buffer -> (unit, error) result io
   (** [write t dst ~ttl buffer] sends the ICMP message in [buffer] to [dst]
-      over IP. Passes [ttl] to the IP stack if given. *)
+      over IP. Passes the time-to-live ([ttl]) to the IP stack if given. *)
 end
 
 module type ICMPV4 = sig
@@ -285,9 +285,9 @@ module type UDP = sig
 
   val write: ?src_port:int -> ?ttl:int -> dst:ipaddr -> dst_port:int -> t -> buffer ->
     (unit, error) result io
-  (** [write ~src_port ?ttl ~dst ~dst_port udp data] is a thread
+  (** [write ~src_port ~ttl ~dst ~dst_port udp data] is a thread
       that writes [data] from an optional [src_port] to a [dst]
-      and [dst_port] IPv4 address pair. An optional [ttl] is passed
+      and [dst_port] IPv4 address pair. An optional time-to-live ([ttl]) is passed
       through to the IP stack. *)
 
 end
