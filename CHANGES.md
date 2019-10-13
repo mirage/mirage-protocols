@@ -1,3 +1,9 @@
+### v3.1.0 (2019-10-14)
+
+- add polymorphic variant `Would_fragment to Ip.error (#20 @hannesm)
+- extend ICMP.write and UDP.write with optional ttl:int argument (#21 @phaer)
+- remove IP.set_ip (#20 @hannesm)
+
 ### v3.0.0 (2019-07-18)
 
 - replace `uipaddr` with `pp_ipaddr`, since the only use is to print
