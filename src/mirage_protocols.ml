@@ -80,7 +80,6 @@ module type IP = sig
     buffer list -> (unit, error) result io
   val pseudoheader : t -> ?src:ipaddr -> ipaddr -> Ip.proto -> int -> buffer
   val src: t -> dst:ipaddr -> ipaddr
-  val set_ip: t -> ipaddr -> unit io
   val get_ip: t -> ipaddr list
   val mtu: t -> int
 end

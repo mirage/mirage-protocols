@@ -135,20 +135,14 @@ module type IP = sig
       packet to [dst].  In the case of IPv4, this will always return
       the same IP, which is the only one set. *)
 
-  val set_ip: t -> ipaddr -> unit io
-  (** Set the IP address associated with this interface.  For IPv4,
-      currently only supports a single IPv4 address, and aliases will
-      be added in a future revision. *)
-
   val get_ip: t -> ipaddr list
   (** Get the IP addresses associated with this interface. For IPv4, only
-   *  one IP address can be set at a time, so the list will always be of
-   *  length 1 (and may be the default value, 0.0.0.0). *)
+      one IP address can be set at a time, so the list will always be of
+      length 1 (and may be the default value, 0.0.0.0). *)
 
   val mtu: t -> int
   (** [mtu ip] is the Maximum Transmission Unit of the [ip] i.e. the maximum
       size of the payload, not including the IP header. *)
-
 end
 
 (** {2 ARP} *)
