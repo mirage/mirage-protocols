@@ -64,6 +64,7 @@ module Ip : sig
 
   type error = [
     | `No_route of string (** can't send a message to that destination *)
+    | `Would_fragment (** would need to fragment, but fragmentation is disabled *)
   ]
 
   val pp_error : error Fmt.t
@@ -134,20 +135,14 @@ module type IP = sig
       packet to [dst].  In the case of IPv4, this will always return
       the same IP, which is the only one set. *)
 
-  val set_ip: t -> ipaddr -> unit io
-  (** Set the IP address associated with this interface.  For IPv4,
-      currently only supports a single IPv4 address, and aliases will
-      be added in a future revision. *)
-
   val get_ip: t -> ipaddr list
   (** Get the IP addresses associated with this interface. For IPv4, only
-   *  one IP address can be set at a time, so the list will always be of
-   *  length 1 (and may be the default value, 0.0.0.0). *)
+      one IP address can be set at a time, so the list will always be of
+      length 1 (and may be the default value, 0.0.0.0). *)
 
   val mtu: t -> int
   (** [mtu ip] is the Maximum Transmission Unit of the [ip] i.e. the maximum
       size of the payload, not including the IP header. *)
-
 end
 
 (** {2 ARP} *)
@@ -236,9 +231,9 @@ module type ICMP = sig
   (** [input t src dst buffer] reacts to the ICMP message in
       [buffer]. *)
 
-  val write : t -> dst:ipaddr -> buffer -> (unit, error) result io
-  (** [write t dst buffer] sends the ICMP message in [buffer] to [dst]
-      over IP. *)
+  val write : t -> dst:ipaddr -> ?ttl:int -> buffer -> (unit, error) result io
+  (** [write t dst ~ttl buffer] sends the ICMP message in [buffer] to [dst]
+      over IP. Passes the time-to-live ([ttl]) to the IP stack if given. *)
 end
 
 module type ICMPV4 = sig
@@ -283,11 +278,12 @@ module type UDP = sig
       return a concrete handler or a [None], which results in the
       datagram being dropped. *)
 
-  val write: ?src_port:int -> dst:ipaddr -> dst_port:int -> t -> buffer ->
+  val write: ?src_port:int -> ?ttl:int -> dst:ipaddr -> dst_port:int -> t -> buffer ->
     (unit, error) result io
-  (** [write ~src_port ~dst ~dst_port udp data] is a thread
+  (** [write ~src_port ~ttl ~dst ~dst_port udp data] is a thread
       that writes [data] from an optional [src_port] to a [dst]
-      and [dst_port] IPv4 address pair. *)
+      and [dst_port] IPv4 address pair. An optional time-to-live ([ttl]) is passed
+      through to the IP stack. *)
 
 end
 

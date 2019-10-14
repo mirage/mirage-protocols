@@ -13,9 +13,11 @@ end
 module Ip = struct
   type error = [
     | `No_route of string (** can't send a message to that destination *)
+    | `Would_fragment
   ]
   let pp_error ppf = function
     | `No_route s -> Fmt.pf ppf "no route to destination: %s" s
+    | `Would_fragment -> Fmt.string ppf "would fragment"
 
   type proto = [ `TCP | `UDP | `ICMP ]
   let pp_proto ppf = function
@@ -78,7 +80,6 @@ module type IP = sig
     buffer list -> (unit, error) result io
   val pseudoheader : t -> ?src:ipaddr -> ipaddr -> Ip.proto -> int -> buffer
   val src: t -> dst:ipaddr -> ipaddr
-  val set_ip: t -> ipaddr -> unit io
   val get_ip: t -> ipaddr list
   val mtu: t -> int
 end
@@ -111,7 +112,7 @@ module type ICMP = sig
   type error
   val pp_error: error Fmt.t
   val input : t -> src:ipaddr -> dst:ipaddr -> buffer -> unit io
-  val write : t -> dst:ipaddr -> buffer -> (unit, error) result io
+  val write : t -> dst:ipaddr -> ?ttl:int -> buffer -> (unit, error) result io
 end
 
 module type ICMPV4 = ICMP
@@ -125,7 +126,7 @@ module type UDP = sig
   include Mirage_device.S
   type callback = src:ipaddr -> dst:ipaddr -> src_port:int -> buffer -> unit io
   val input: listeners:(dst_port:int -> callback option) -> t -> ipinput
-  val write: ?src_port:int -> dst:ipaddr -> dst_port:int -> t -> buffer ->
+  val write: ?src_port:int -> ?ttl:int -> dst:ipaddr -> dst_port:int -> t -> buffer ->
     (unit, error) result io
 end
 
