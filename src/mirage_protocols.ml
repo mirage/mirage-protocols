@@ -26,6 +26,19 @@ module Ip = struct
     | `ICMP -> Fmt.string ppf "ICMP"
 end
 
+(** Configuration *)
+type ipv4_config = {
+  address : Ipaddr.V4.t;
+  network : Ipaddr.V4.Prefix.t;
+  gateway : Ipaddr.V4.t option;
+}
+
+(** {2 DHCP client}
+ *  A client which engages in lease transactions. *)
+module type DHCP_CLIENT = sig
+  type t = ipv4_config Lwt_stream.t
+end
+
 module Arp = struct
   type error = [
     | `Timeout (** Failed to establish a mapping between an IP and a link-level address *)
@@ -50,85 +63,80 @@ end
 module type ETHERNET = sig
   type error = private [> Ethernet.error]
   val pp_error: error Fmt.t
-  type buffer
-  type macaddr
   include Mirage_device.S
-  val write: t -> ?src:macaddr -> macaddr -> Ethernet.proto -> ?size:int ->
-    (buffer -> int) -> (unit, error) result io
-  val mac: t -> macaddr
+  val write: t -> ?src:Macaddr.t -> Macaddr.t -> Ethernet.proto -> ?size:int ->
+    (Cstruct.t -> int) -> (unit, error) result Lwt.t
+  val mac: t -> Macaddr.t
   val mtu: t -> int
   val input:
-    arpv4:(buffer -> unit io) ->
-    ipv4:(buffer -> unit io) ->
-    ipv6:(buffer -> unit io) ->
-    t -> buffer -> unit io
+    arpv4:(Cstruct.t -> unit Lwt.t) ->
+    ipv4:(Cstruct.t -> unit Lwt.t) ->
+    ipv6:(Cstruct.t -> unit Lwt.t) ->
+    t -> Cstruct.t -> unit Lwt.t
 end
+
 module type IP = sig
   type error = private [> Ip.error]
   val pp_error: error Fmt.t
-  type buffer
   type ipaddr
   val pp_ipaddr : ipaddr Fmt.t
   include Mirage_device.S
-  type callback = src:ipaddr -> dst:ipaddr -> buffer -> unit io
+  type callback = src:ipaddr -> dst:ipaddr -> Cstruct.t -> unit Lwt.t
   val input:
     t ->
     tcp:callback -> udp:callback -> default:(proto:int -> callback) ->
-    buffer -> unit io
+    Cstruct.t -> unit Lwt.t
   val write: t -> ?fragment:bool -> ?ttl:int ->
-    ?src:ipaddr -> ipaddr -> Ip.proto -> ?size:int -> (buffer -> int) ->
-    buffer list -> (unit, error) result io
-  val pseudoheader : t -> ?src:ipaddr -> ipaddr -> Ip.proto -> int -> buffer
+    ?src:ipaddr -> ipaddr -> Ip.proto -> ?size:int -> (Cstruct.t -> int) ->
+    Cstruct.t list -> (unit, error) result Lwt.t
+  val pseudoheader : t -> ?src:ipaddr -> ipaddr -> Ip.proto -> int -> Cstruct.t
   val src: t -> dst:ipaddr -> ipaddr
   val get_ip: t -> ipaddr list
   val mtu: t -> int
 end
 
+module type IPV4 = IP with type ipaddr = Ipaddr.V4.t
+module type IPV6 = IP with type ipaddr = Ipaddr.V6.t
+
 module type ARP = sig
   include Mirage_device.S
-  type ipaddr
-  type buffer
-  type macaddr
-  type repr
   type error = private [> Arp.error]
   val pp_error: error Fmt.t
-  val to_repr : t -> repr io
-  val pp : repr Fmt.t
-  val get_ips : t -> ipaddr list
-  val set_ips : t -> ipaddr list -> unit io
-  val remove_ip : t -> ipaddr -> unit io
-  val add_ip : t -> ipaddr -> unit io
-  val query : t -> ipaddr -> (macaddr, error) result io
-  val input : t -> buffer -> unit io
+  val pp : t Fmt.t
+  val get_ips : t -> Ipaddr.V4.t list
+  val set_ips : t -> Ipaddr.V4.t list -> unit Lwt.t
+  val remove_ip : t -> Ipaddr.V4.t -> unit Lwt.t
+  val add_ip : t -> Ipaddr.V4.t -> unit Lwt.t
+  val query : t -> Ipaddr.V4.t -> (Macaddr.t, error) result Lwt.t
+  val input : t -> Cstruct.t -> unit Lwt.t
 end
-
-module type IPV4 = IP
-module type IPV6 = IP
 
 module type ICMP = sig
   include Mirage_device.S
   type ipaddr
-  type buffer
   type error
   val pp_error: error Fmt.t
-  val input : t -> src:ipaddr -> dst:ipaddr -> buffer -> unit io
-  val write : t -> dst:ipaddr -> ?ttl:int -> buffer -> (unit, error) result io
+  val input : t -> src:ipaddr -> dst:ipaddr -> Cstruct.t -> unit Lwt.t
+  val write : t -> dst:ipaddr -> ?ttl:int -> Cstruct.t -> (unit, error) result Lwt.t
 end
 
-module type ICMPV4 = ICMP
+module type ICMPV4 = ICMP with type ipaddr = Ipaddr.V4.t
+module type ICMPV6 = ICMP with type ipaddr = Ipaddr.V6.t
 
 module type UDP = sig
   type error
   val pp_error: error Fmt.t
-  type buffer
   type ipaddr
   type ipinput
   include Mirage_device.S
-  type callback = src:ipaddr -> dst:ipaddr -> src_port:int -> buffer -> unit io
+  type callback = src:ipaddr -> dst:ipaddr -> src_port:int -> Cstruct.t -> unit Lwt.t
   val input: listeners:(dst_port:int -> callback option) -> t -> ipinput
-  val write: ?src_port:int -> ?ttl:int -> dst:ipaddr -> dst_port:int -> t -> buffer ->
-    (unit, error) result io
+  val write: ?src_port:int -> ?ttl:int -> dst:ipaddr -> dst_port:int -> t -> Cstruct.t ->
+    (unit, error) result Lwt.t
 end
+
+module type UDPV4 = UDP with type ipaddr = Ipaddr.V4.t
+module type UDPV6 = UDP with type ipaddr = Ipaddr.V6.t
 
 module Keepalive = struct
   type t = {
@@ -141,25 +149,25 @@ end
 module type TCP = sig
   type error = private [> Tcp.error]
   type write_error = private [> Tcp.write_error]
-  type buffer
   type ipaddr
   type ipinput
   type flow
   include Mirage_device.S
   include Mirage_flow.S with
-      type 'a io  := 'a io
-  and type buffer := buffer
-  and type flow   := flow
+      type flow   := flow
   and type error  := error
   and type write_error := write_error
 
   val dst: flow -> ipaddr * int
-  val write_nodelay: flow -> buffer -> (unit, write_error) result io
-  val writev_nodelay: flow -> buffer list -> (unit, write_error) result io
-  val create_connection: ?keepalive:Keepalive.t -> t -> ipaddr * int -> (flow, error) result io
+  val write_nodelay: flow -> Cstruct.t -> (unit, write_error) result Lwt.t
+  val writev_nodelay: flow -> Cstruct.t list -> (unit, write_error) result Lwt.t
+  val create_connection: ?keepalive:Keepalive.t -> t -> ipaddr * int -> (flow, error) result Lwt.t
   type listener = {
-    process: flow -> unit io;
+    process: flow -> unit Lwt.t;
     keepalive: Keepalive.t option;
   }
   val input: t -> listeners:(int -> listener option) -> ipinput
 end
+
+module type TCPV4 = TCP with type ipaddr = Ipaddr.V4.t
+module type TCPV6 = TCP with type ipaddr = Ipaddr.V6.t

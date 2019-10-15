@@ -1,3 +1,9 @@
+### v4.0.0 (2019-10-24)
+
+- remove mirage-protocols-lwt (#23 @hannesm)
+- specialise mirage-protocols to Lwt.t, Cstruct,t, Ipaddr.V4/V6.t, Macaddr.t (#23 @hannesm)
+- raise lower OCaml bound to 4.06.0 (#23 @hannesm)
+
 ### v3.1.0 (2019-10-14)
 
 - add polymorphic variant `Would_fragment to Ip.error (#20 @hannesm)
