@@ -33,12 +33,6 @@ type ipv4_config = {
   gateway : Ipaddr.V4.t option;
 }
 
-(** {2 DHCP client}
- *  A client which engages in lease transactions. *)
-module type DHCP_CLIENT = sig
-  type t = ipv4_config Lwt_stream.t
-end
-
 module Arp = struct
   type error = [
     | `Timeout (** Failed to establish a mapping between an IP and a link-level address *)
@@ -75,6 +69,19 @@ module type ETHERNET = sig
     t -> Cstruct.t -> unit Lwt.t
 end
 
+module type ARP = sig
+  include Mirage_device.S
+  type error = private [> Arp.error]
+  val pp_error: error Fmt.t
+  val pp : t Fmt.t
+  val get_ips : t -> Ipaddr.V4.t list
+  val set_ips : t -> Ipaddr.V4.t list -> unit Lwt.t
+  val remove_ip : t -> Ipaddr.V4.t -> unit Lwt.t
+  val add_ip : t -> Ipaddr.V4.t -> unit Lwt.t
+  val query : t -> Ipaddr.V4.t -> (Macaddr.t, error) result Lwt.t
+  val input : t -> Cstruct.t -> unit Lwt.t
+end
+
 module type IP = sig
   type error = private [> Ip.error]
   val pp_error: error Fmt.t
@@ -97,19 +104,6 @@ end
 
 module type IPV4 = IP with type ipaddr = Ipaddr.V4.t
 module type IPV6 = IP with type ipaddr = Ipaddr.V6.t
-
-module type ARP = sig
-  include Mirage_device.S
-  type error = private [> Arp.error]
-  val pp_error: error Fmt.t
-  val pp : t Fmt.t
-  val get_ips : t -> Ipaddr.V4.t list
-  val set_ips : t -> Ipaddr.V4.t list -> unit Lwt.t
-  val remove_ip : t -> Ipaddr.V4.t -> unit Lwt.t
-  val add_ip : t -> Ipaddr.V4.t -> unit Lwt.t
-  val query : t -> Ipaddr.V4.t -> (Macaddr.t, error) result Lwt.t
-  val input : t -> Cstruct.t -> unit Lwt.t
-end
 
 module type ICMP = sig
   include Mirage_device.S
@@ -171,3 +165,7 @@ end
 
 module type TCPV4 = TCP with type ipaddr = Ipaddr.V4.t
 module type TCPV6 = TCP with type ipaddr = Ipaddr.V6.t
+
+module type DHCP_CLIENT = sig
+  type t = ipv4_config Lwt_stream.t
+end

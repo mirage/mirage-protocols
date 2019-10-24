@@ -4,6 +4,7 @@
 
 (** {2 Ethernet layer} *)
 
+(** Ethernet errors and protocols. *)
 module Ethernet : sig
   type error = [ `Exceeds_mtu ]
   val pp_error: error Fmt.t
@@ -51,9 +52,59 @@ module type ETHERNET = sig
       it depending on the protocol to the callback. *)
 end
 
-(** {2 IP stack} *)
+(** {2 ARP} *)
 
-(** IP errors. *)
+(** Arp errors. *)
+module Arp : sig
+  type error = [ `Timeout ]
+  val pp_error : error Fmt.t
+end
+
+(** Address resolution protocol, translating network addresses (e.g. IPv4)
+    into link layer addresses (MAC). *)
+module type ARP = sig
+  include Mirage_device.S
+
+  type error = private [> Arp.error]
+  (** The type for ARP errors. *)
+
+  val pp_error: error Fmt.t
+  (** [pp_error] is the pretty-printer for errors. *)
+
+  (** Prettyprint cache contents *)
+  val pp : t Fmt.t
+
+  (** [get_ips arp] gets the bound IP address list in the [arp]
+      value. *)
+  val get_ips : t -> Ipaddr.V4.t list
+
+  (** [set_ips arp] sets the bound IP address list, which will transmit a
+      GARP packet also. *)
+  val set_ips : t -> Ipaddr.V4.t list -> unit Lwt.t
+
+  (** [remove_ip arp ip] removes [ip] to the bound IP address list in
+      the [arp] value, which will transmit a GARP packet for any remaining IPs in
+      the bound IP address list after the removal. *)
+  val remove_ip : t -> Ipaddr.V4.t -> unit Lwt.t
+
+  (** [add_ip arp ip] adds [ip] to the bound IP address list in the
+      [arp] value, which will transmit a GARP packet also. *)
+  val add_ip : t -> Ipaddr.V4.t -> unit Lwt.t
+
+  (** [query arp ip] queries the cache in [arp] for an ARP entry
+      corresponding to [ip], which may result in the sender sleeping
+      waiting for a response. *)
+  val query : t -> Ipaddr.V4.t -> (Macaddr.t, error) result Lwt.t
+
+  (** [input arp frame] will handle an ARP frame. If it is a response,
+      it will update its cache, otherwise will try to satisfy the
+      request. *)
+  val input : t -> Cstruct.t -> unit Lwt.t
+end
+
+(** {2 IP layer} *)
+
+(** IP errors and protocols. *)
 module Ip : sig
 
   type error = [
@@ -67,7 +118,7 @@ module Ip : sig
   val pp_proto: proto Fmt.t
 end
 
-(** An Internet Protocol (IP) stack reassembles IP fragments into packets,
+(** An Internet Protocol (IP) layer reassembles IP fragments into packets,
    removes the IP header, and on the sending side fragments overlong payload
    and inserts IP headers. *)
 module type IP = sig
@@ -136,61 +187,18 @@ module type IP = sig
       size of the payload, not including the IP header. *)
 end
 
+(** IPv4 layer *)
 module type IPV4 = IP with type ipaddr = Ipaddr.V4.t
 
+(** IPv6 layer *)
 module type IPV6 = IP with type ipaddr = Ipaddr.V6.t
 
-(** {2 ARP} *)
+(* No Icmp module, as there are no exposed error polymorphic variants *)
 
-(** Arp error. *)
-module Arp : sig
-  type error = [ `Timeout ]
-  val pp_error : error Fmt.t
-end
+(** {2 ICMP layer} *)
 
-module type ARP = sig
-  include Mirage_device.S
-
-  type error = private [> Arp.error]
-  (** The type for ARP errors. *)
-
-  val pp_error: error Fmt.t
-  (** [pp_error] is the pretty-printer for errors. *)
-
-  (** Prettyprint cache contents *)
-  val pp : t Fmt.t
-
-  (** [get_ips arp] gets the bound IP address list in the [arp]
-      value. *)
-  val get_ips : t -> Ipaddr.V4.t list
-
-  (** [set_ips arp] sets the bound IP address list, which will transmit a
-      GARP packet also. *)
-  val set_ips : t -> Ipaddr.V4.t list -> unit Lwt.t
-
-  (** [remove_ip arp ip] removes [ip] to the bound IP address list in
-      the [arp] value, which will transmit a GARP packet for any remaining IPs in
-      the bound IP address list after the removal. *)
-  val remove_ip : t -> Ipaddr.V4.t -> unit Lwt.t
-
-  (** [add_ip arp ip] adds [ip] to the bound IP address list in the
-      [arp] value, which will transmit a GARP packet also. *)
-  val add_ip : t -> Ipaddr.V4.t -> unit Lwt.t
-
-  (** [query arp ip] queries the cache in [arp] for an ARP entry
-      corresponding to [ip], which may result in the sender sleeping
-      waiting for a response. *)
-  val query : t -> Ipaddr.V4.t -> (Macaddr.t, error) result Lwt.t
-
-  (** [input arp frame] will handle an ARP frame. If it is a response,
-      it will update its cache, otherwise will try to satisfy the
-      request. *)
-  val input : t -> Cstruct.t -> unit Lwt.t
-end
-
-(** No Icmp module, as there are no exposed error polymorphic variants *)
-
-(** {2 ICMP module} *)
+(** Internet Control Message Protocol: error messages and operational
+    information. *)
 module type ICMP = sig
   include Mirage_device.S
 
@@ -212,15 +220,18 @@ module type ICMP = sig
       over IP. Passes the time-to-live ([ttl]) to the IP stack if given. *)
 end
 
+(** ICMPv4 layer *)
 module type ICMPV4 = ICMP with type ipaddr = Ipaddr.V4.t
 
+(** ICMPv6 layer *)
 module type ICMPV6 = ICMP with type ipaddr = Ipaddr.V6.t
 
-(** {2 UDP stack} *)
+(** {2 UDP layer} *)
 
-(** No Udp module, as there are no exposed error polymorphic variants *)
+(* No Udp module, as there are no exposed error polymorphic variants *)
 
-(*    A UDP stack that can send and receive datagrams. *)
+(** User datagram protocol layer: connectionless message-oriented
+    communication. *)
 module type UDP = sig
 
   type error (* entirely abstract since we expose none in a Udp module *)
@@ -234,7 +245,7 @@ module type UDP = sig
 
   type ipinput
   (** The type for input function continuation to pass onto the
-      underlying {!IP} stack. This will normally be a NOOP for a
+      underlying {!IP} layer. This will normally be a NOOP for a
       conventional kernel, but a direct implementation will parse the
       buffer. *)
 
@@ -253,18 +264,20 @@ module type UDP = sig
 
   val write: ?src_port:int -> ?ttl:int -> dst:ipaddr -> dst_port:int -> t -> Cstruct.t ->
     (unit, error) result Lwt.t
-  (** [write ~src_port ~ttl ~dst ~dst_port udp data] is a thread
+  (** [write ~src_port ~ttl ~dst ~dst_port udp data] is a task
       that writes [data] from an optional [src_port] to a [dst]
-      and [dst_port] IPv4 address pair. An optional time-to-live ([ttl]) is passed
-      through to the IP stack. *)
+      and [dst_port] IP address pair. An optional time-to-live ([ttl]) is passed
+      through to the IP layer. *)
 
 end
 
+(** UDPv4 layer *)
 module type UDPV4 = UDP with type ipaddr = Ipaddr.V4.t
 
+(** UDPv6 layer *)
 module type UDPV6 = UDP with type ipaddr = Ipaddr.V6.t
 
-(** {2 TCP stack} *)
+(** {2 TCP layer} *)
 
 (** TCP errors. *)
 module Tcp : sig
@@ -291,8 +304,8 @@ module Keepalive: sig
   (** Configuration for TCP keep-alives *)
 end
 
-(** A TCP stack that can send and receive reliable streams using the
-    TCP protocol. *)
+(** Transmission Control Protocol layer: reliable ordered streaming
+    communication. *)
 module type TCP = sig
 
   type error = private [> Tcp.error]
@@ -306,7 +319,7 @@ module type TCP = sig
 
   type ipinput
   (** The type for input function continuation to pass onto the
-      underlying {!IP} stack. This will normally be a NOOP for a
+      underlying {!IP} layer. This will normally be a NOOP for a
       conventional kernel, but a direct implementation will parse the
       buffer. *)
 
@@ -329,7 +342,7 @@ module type TCP = sig
   (** [write_nodelay flow buffer] writes the contents of [buffer]
       to the flow. The thread blocks until all data has been successfully
       transmitted to the remote endpoint.
-      Buffering within the stack is minimized in this mode.
+      Buffering within the layer is minimized in this mode.
       Note that this API will change in a future revision to be a
       per-flow attribute instead of a separately exposed function. *)
 
@@ -337,7 +350,7 @@ module type TCP = sig
   (** [writev_nodelay flow buffers] writes the contents of [buffers]
       to the flow. The thread blocks until all data has been successfully
       transmitted to the remote endpoint.
-      Buffering within the stack is minimized in this mode.
+      Buffering within the layer is minimized in this mode.
       Note that this API will change in a future revision to be a
       per-flow attribute instead of a separately exposed function. *)
 
@@ -358,9 +371,9 @@ module type TCP = sig
 
   val input: t -> listeners:(int -> listener option) -> ipinput
   (** [input t listeners] returns an input function continuation to be
-      passed to the underlying {!IP} stack.
+      passed to the underlying {!IP} layer.
 
-      When the stack receives a TCP SYN (i.e. a connection request) to a
+      When the layer receives a TCP SYN (i.e. a connection request) to a
       particular [port], it will evaluate [listeners port]:
 
       - If [listeners port] is [None], the input function will return an RST
@@ -370,23 +383,25 @@ module type TCP = sig
         If [listener.keepalive] is [Some configuration] then the TCP keep-alive
         [configuration] will be applied before calling [listener.process].
   *)
-
-
 end
 
+(** TCPv4 layer *)
 module type TCPV4 = TCP with type ipaddr = Ipaddr.V4.t
 
+(** TCPv6 layer *)
 module type TCPV6 = TCP with type ipaddr = Ipaddr.V6.t
 
-(** Configuration *)
+(** {2 DHCP client} *)
+
+(** IPv4 Configuration *)
 type ipv4_config = {
   address : Ipaddr.V4.t;
   network : Ipaddr.V4.Prefix.t;
   gateway : Ipaddr.V4.t option;
 }
 
-(** {2 DHCP client}
- *  A client which engages in lease transactions. *)
+(** Dynamic host configuration protocol: a client engaging in lease
+    transactions. *)
 module type DHCP_CLIENT = sig
   type t = ipv4_config Lwt_stream.t
 end
