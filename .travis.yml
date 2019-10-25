@@ -7,9 +7,9 @@ services:
 env:
   global:
   - REVDEPS=true
-  - PINS="mirage-protocols.4.0.0:."
   - PACKAGE="mirage-protocols"
   - DISTRO=alpine
+  - REVDEPS=true
   matrix:
   - OCAML_VERSION=4.06
   - OCAML_VERSION=4.07
