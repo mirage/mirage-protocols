@@ -1,3 +1,7 @@
+### v4.0.1 (2019-11-04)
+
+* provide deprecated Mirage_protocols_lwt for smooth transition (#25 @hannesm)
+
 ### v4.0.0 (2019-10-24)
 
 - remove mirage-protocols-lwt (#23 @hannesm)
