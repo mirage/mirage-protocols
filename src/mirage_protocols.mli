@@ -262,10 +262,10 @@ module type UDP = sig
       return a concrete handler or a [None], which results in the
       datagram being dropped. *)
 
-  val write: ?src_port:int -> ?ttl:int -> dst:ipaddr -> dst_port:int -> t -> Cstruct.t ->
+  val write: ?src:ipaddr -> ?src_port:int -> ?ttl:int -> dst:ipaddr -> dst_port:int -> t -> Cstruct.t ->
     (unit, error) result Lwt.t
-  (** [write ~src_port ~ttl ~dst ~dst_port udp data] is a task
-      that writes [data] from an optional [src_port] to a [dst]
+  (** [write ~src ~src_port ~ttl ~dst ~dst_port udp data] is a task
+      that writes [data] from an optional [src] and [src_port] to a [dst]
       and [dst_port] IP address pair. An optional time-to-live ([ttl]) is passed
       through to the IP layer. *)
 
