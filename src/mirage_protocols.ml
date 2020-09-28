@@ -111,7 +111,7 @@ module type ICMP = sig
   type error
   val pp_error: error Fmt.t
   val input : t -> src:ipaddr -> dst:ipaddr -> Cstruct.t -> unit Lwt.t
-  val write : t -> dst:ipaddr -> ?ttl:int -> Cstruct.t -> (unit, error) result Lwt.t
+  val write : t -> ?src:ipaddr -> dst:ipaddr -> ?ttl:int -> Cstruct.t -> (unit, error) result Lwt.t
 end
 
 module type ICMPV4 = ICMP with type ipaddr = Ipaddr.V4.t
