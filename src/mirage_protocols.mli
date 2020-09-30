@@ -324,7 +324,7 @@ module type TCP = sig
       buffer. *)
 
   type flow
-  (** A flow represents the state of a single TCPv4 stream that is connected
+  (** A flow represents the state of a single TCP stream that is connected
       to an endpoint. *)
 
   include Mirage_device.S
@@ -335,7 +335,7 @@ module type TCP = sig
   and type write_error := write_error
 
   val dst: flow -> ipaddr * int
-  (** Get the destination IPv4 address and destination port that a
+  (** Get the destination IP address and destination port that a
       flow is currently connected to. *)
 
   val write_nodelay: flow -> Cstruct.t -> (unit, write_error) result Lwt.t
@@ -355,7 +355,7 @@ module type TCP = sig
       per-flow attribute instead of a separately exposed function. *)
 
   val create_connection: ?keepalive:Keepalive.t -> t -> ipaddr * int -> (flow, error) result Lwt.t
-  (** [create_connection ~keepalive t (addr,port)] opens a TCPv4 connection
+  (** [create_connection ~keepalive t (addr,port)] opens a TCP connection
       to the specified endpoint.
 
       If the optional argument [?keepalive] is provided then TCP keep-alive
@@ -390,18 +390,3 @@ module type TCPV4 = TCP with type ipaddr = Ipaddr.V4.t
 
 (** TCPv6 layer *)
 module type TCPV6 = TCP with type ipaddr = Ipaddr.V6.t
-
-(** {2 DHCP client} *)
-
-(** IPv4 Configuration *)
-type ipv4_config = {
-  address : Ipaddr.V4.t;
-  network : Ipaddr.V4.Prefix.t;
-  gateway : Ipaddr.V4.t option;
-}
-
-(** Dynamic host configuration protocol: a client engaging in lease
-    transactions. *)
-module type DHCP_CLIENT = sig
-  type t = ipv4_config Lwt_stream.t
-end

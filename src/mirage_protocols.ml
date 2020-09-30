@@ -26,13 +26,6 @@ module Ip = struct
     | `ICMP -> Fmt.string ppf "ICMP"
 end
 
-(** Configuration *)
-type ipv4_config = {
-  address : Ipaddr.V4.t;
-  network : Ipaddr.V4.Prefix.t;
-  gateway : Ipaddr.V4.t option;
-}
-
 module Arp = struct
   type error = [
     | `Timeout (** Failed to establish a mapping between an IP and a link-level address *)
@@ -165,7 +158,3 @@ end
 
 module type TCPV4 = TCP with type ipaddr = Ipaddr.V4.t
 module type TCPV6 = TCP with type ipaddr = Ipaddr.V6.t
-
-module type DHCP_CLIENT = sig
-  type t = ipv4_config Lwt_stream.t
-end
