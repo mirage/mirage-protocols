@@ -26,13 +26,6 @@ module Ip = struct
     | `ICMP -> Fmt.string ppf "ICMP"
 end
 
-(** Configuration *)
-type ipv4_config = {
-  address : Ipaddr.V4.t;
-  network : Ipaddr.V4.Prefix.t;
-  gateway : Ipaddr.V4.t option;
-}
-
 module Arp = struct
   type error = [
     | `Timeout (** Failed to establish a mapping between an IP and a link-level address *)
@@ -99,7 +92,7 @@ module type IP = sig
   val pseudoheader : t -> ?src:ipaddr -> ipaddr -> Ip.proto -> int -> Cstruct.t
   val src: t -> dst:ipaddr -> ipaddr
   val get_ip: t -> ipaddr list
-  val mtu: t -> int
+  val mtu: t -> dst:ipaddr -> int
 end
 
 module type IPV4 = IP with type ipaddr = Ipaddr.V4.t
@@ -111,7 +104,7 @@ module type ICMP = sig
   type error
   val pp_error: error Fmt.t
   val input : t -> src:ipaddr -> dst:ipaddr -> Cstruct.t -> unit Lwt.t
-  val write : t -> dst:ipaddr -> ?ttl:int -> Cstruct.t -> (unit, error) result Lwt.t
+  val write : t -> ?src:ipaddr -> dst:ipaddr -> ?ttl:int -> Cstruct.t -> (unit, error) result Lwt.t
 end
 
 module type ICMPV4 = ICMP with type ipaddr = Ipaddr.V4.t
@@ -125,7 +118,7 @@ module type UDP = sig
   include Mirage_device.S
   type callback = src:ipaddr -> dst:ipaddr -> src_port:int -> Cstruct.t -> unit Lwt.t
   val input: listeners:(dst_port:int -> callback option) -> t -> ipinput
-  val write: ?src_port:int -> ?ttl:int -> dst:ipaddr -> dst_port:int -> t -> Cstruct.t ->
+  val write: ?src:ipaddr -> ?src_port:int -> ?ttl:int -> dst:ipaddr -> dst_port:int -> t -> Cstruct.t ->
     (unit, error) result Lwt.t
 end
 
@@ -165,7 +158,3 @@ end
 
 module type TCPV4 = TCP with type ipaddr = Ipaddr.V4.t
 module type TCPV6 = TCP with type ipaddr = Ipaddr.V6.t
-
-module type DHCP_CLIENT = sig
-  type t = ipv4_config Lwt_stream.t
-end
