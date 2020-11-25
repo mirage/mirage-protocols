@@ -92,7 +92,7 @@ module type IP = sig
   val pseudoheader : t -> ?src:ipaddr -> ipaddr -> Ip.proto -> int -> Cstruct.t
   val src: t -> dst:ipaddr -> ipaddr
   val get_ip: t -> ipaddr list
-  val mtu: t -> int
+  val mtu: t -> dst:ipaddr -> int
 end
 
 module type IPV4 = IP with type ipaddr = Ipaddr.V4.t

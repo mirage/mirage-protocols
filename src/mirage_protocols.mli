@@ -182,9 +182,9 @@ module type IP = sig
       one IP address can be set at a time, so the list will always be of
       length 1 (and may be the default value, 0.0.0.0). *)
 
-  val mtu: t -> int
-  (** [mtu ip] is the Maximum Transmission Unit of the [ip] i.e. the maximum
-      size of the payload, not including the IP header. *)
+  val mtu: t -> dst:ipaddr -> int
+  (** [mtu ~dst ip] is the Maximum Transmission Unit of the [ip] i.e. the
+      maximum size of the payload, not including the IP header. *)
 end
 
 (** IPv4 layer *)
