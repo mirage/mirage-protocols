@@ -1,3 +1,11 @@
+### v5.0.0 (2020-11-25)
+
+- Retire ipv4_config type and DHCP_CLIENT module type (#27 @hannesm)
+- Revise IP.mtu (used to be of type t -> int, now t -> dst:ipaddr -> int) to
+  support dual stack (#27 @hannesm)
+- Revise ICMP.write, now has ?src:ipaddr (#27 @hannesm)
+- Revise UDP.write. now has ?src:ipaddr (#27 @hannesm)
+
 ### v4.0.1 (2019-11-04)
 
 * provide deprecated Mirage_protocols_lwt for smooth transition (#25 @hannesm)
