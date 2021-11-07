@@ -114,10 +114,11 @@ module type UDP = sig
   type error
   val pp_error: error Fmt.t
   type ipaddr
-  type ipinput
   include Mirage_device.S
   type callback = src:ipaddr -> dst:ipaddr -> src_port:int -> Cstruct.t -> unit Lwt.t
-  val input: listeners:(dst_port:int -> callback option) -> t -> ipinput
+  val listen : t -> port:int -> callback -> unit
+  val unlisten : t -> port:int -> unit
+  val input: t -> src:ipaddr -> dst:ipaddr -> Cstruct.t -> unit Lwt.t
   val write: ?src:ipaddr -> ?src_port:int -> ?ttl:int -> dst:ipaddr -> dst_port:int -> t -> Cstruct.t ->
     (unit, error) result Lwt.t
 end
@@ -137,7 +138,6 @@ module type TCP = sig
   type error = private [> Tcp.error]
   type write_error = private [> Tcp.write_error]
   type ipaddr
-  type ipinput
   type flow
   include Mirage_device.S
   include Mirage_flow.S with
@@ -149,11 +149,9 @@ module type TCP = sig
   val write_nodelay: flow -> Cstruct.t -> (unit, write_error) result Lwt.t
   val writev_nodelay: flow -> Cstruct.t list -> (unit, write_error) result Lwt.t
   val create_connection: ?keepalive:Keepalive.t -> t -> ipaddr * int -> (flow, error) result Lwt.t
-  type listener = {
-    process: flow -> unit Lwt.t;
-    keepalive: Keepalive.t option;
-  }
-  val input: t -> listeners:(int -> listener option) -> ipinput
+  val listen : t -> port:int -> ?keepalive:Keepalive.t -> (flow -> unit Lwt.t) -> unit
+  val unlisten : t -> port:int -> unit
+  val input: t -> src:ipaddr -> dst:ipaddr -> Cstruct.t -> unit Lwt.t
 end
 
 module type TCPV4 = TCP with type ipaddr = Ipaddr.V4.t

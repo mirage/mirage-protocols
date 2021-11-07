@@ -243,27 +243,28 @@ module type UDP = sig
   type ipaddr
   (** The type for an IP address representations. *)
 
-  type ipinput
-  (** The type for input function continuation to pass onto the
-      underlying {!IP} layer. This will normally be a NOOP for a
-      conventional kernel, but a direct implementation will parse the
-      buffer. *)
-
   include Mirage_device.S
 
   type callback = src:ipaddr -> dst:ipaddr -> src_port:int -> Cstruct.t -> unit Lwt.t
   (** The type for callback functions that adds the UDP metadata for
-      [src] and [dst] IP addresses, the [src_port] of the connection
-      and the [buffer] payload of the datagram. *)
+      [src] and [dst] IP addresses, the [src_port] of the
+      connection and the [buffer] payload of the datagram. *)
 
-  val input: listeners:(dst_port:int -> callback option) -> t -> ipinput
-  (** [input listeners t] demultiplexes incoming datagrams based on
-      their destination port.  The [listeners] callback will either
-      return a concrete handler or a [None], which results in the
-      datagram being dropped. *)
+  val listen : t -> port:int -> callback -> unit
+  (** [listen t ~port callback] executes [callback] for each packet received
+      on [port].
 
-  val write: ?src:ipaddr -> ?src_port:int -> ?ttl:int -> dst:ipaddr -> dst_port:int -> t -> Cstruct.t ->
-    (unit, error) result Lwt.t
+      @raise Invalid_argument if [port < 0] or [port > 65535] *)
+
+  val unlisten : t -> port:int -> unit
+  (** [unlisten t ~port] stops any listeners on [port]. *)
+
+  val input: t -> src:ipaddr -> dst:ipaddr -> Cstruct.t -> unit Lwt.t
+  (** [input t] demultiplexes incoming datagrams based on
+      their destination port. *)
+
+  val write: ?src:ipaddr -> ?src_port:int -> ?ttl:int -> dst:ipaddr ->
+    dst_port:int -> t -> Cstruct.t -> (unit, error) result Lwt.t
   (** [write ~src ~src_port ~ttl ~dst ~dst_port udp data] is a task
       that writes [data] from an optional [src] and [src_port] to a [dst]
       and [dst_port] IP address pair. An optional time-to-live ([ttl]) is passed
@@ -317,12 +318,6 @@ module type TCP = sig
   type ipaddr
   (** The type for IP address representations. *)
 
-  type ipinput
-  (** The type for input function continuation to pass onto the
-      underlying {!IP} layer. This will normally be a NOOP for a
-      conventional kernel, but a direct implementation will parse the
-      buffer. *)
-
   type flow
   (** A flow represents the state of a single TCP stream that is connected
       to an endpoint. *)
@@ -363,26 +358,20 @@ module type TCP = sig
       no responses are received then eventually the connection will be disconnected:
       [read] will return [Ok `Eof] and write will return [Error `Closed] *)
 
-  type listener = {
-    process: flow -> unit Lwt.t; (** process a connected flow *)
-    keepalive: Keepalive.t option; (** optional TCP keepalive configuration *)
-  }
-  (** A TCP listener on a particular port *)
+  val listen : t -> port:int -> ?keepalive:Keepalive.t -> (flow -> unit Lwt.t) -> unit
+  (** [listen t ~port ~keepalive callback] listens on [port]. The [callback] is
+      executed for each flow that was established. If [keepalive] is provided,
+      this configuration will be applied before calling [callback].
 
-  val input: t -> listeners:(int -> listener option) -> ipinput
-  (** [input t listeners] returns an input function continuation to be
-      passed to the underlying {!IP} layer.
+      @raise Invalid_argument if [port < 0] or [port > 65535]
+ *)
 
-      When the layer receives a TCP SYN (i.e. a connection request) to a
-      particular [port], it will evaluate [listeners port]:
+  val unlisten : t -> port:int -> unit
+  (** [unlisten t ~port] stops any listener on [port]. *)
 
-      - If [listeners port] is [None], the input function will return an RST
-        to refuse the connection.
-      - If [listeners port] is [Some listener] then the connection will be
-        accepted and the resulting flow will be processed by [listener.process].
-        If [listener.keepalive] is [Some configuration] then the TCP keep-alive
-        [configuration] will be applied before calling [listener.process].
-  *)
+  val input: t -> src:ipaddr -> dst:ipaddr -> Cstruct.t -> unit Lwt.t
+  (** [input t] returns an input function continuation to be
+      passed to the underlying {!IP} layer. *)
 end
 
 (** TCPv4 layer *)
