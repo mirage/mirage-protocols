@@ -9,7 +9,7 @@ bug-reports:  "https://github.com/mirage/mirage-protocols/issues"
 tags:         ["org:mirage"]
 
 build: [
-  [ "dune" "subst" ] {pinned}
+  [ "dune" "subst" ] {dev}
   [ "dune" "build" "-p" name "-j" jobs ]
 ]
 
@@ -23,6 +23,7 @@ depends: [
   "lwt" {>= "4.0.0"}
   "ipaddr" {>= "4.0.0"}
   "macaddr" {>= "4.0.0"}
+  "cstruct" {>= "6.0.0"}
 ]
 synopsis: "MirageOS signatures for network protocols"
 description: """
