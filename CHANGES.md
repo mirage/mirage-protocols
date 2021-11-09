@@ -1,3 +1,23 @@
+### v6.0.0 (2021-11-09)
+
+Simplify UDP and TCP module types to set the stage for an alternative TCP stack,
+and allow TCP and UDP to hold the listeners internally (instead of hiding them
+in a Mirage_stack.S.
+
+- Revise UDP module type:
+   - removed type ipinput
+   - add a val listen : t -> port:int -> callback -> unit
+   - add a val unlisten : t -> port:int -> unit
+   - val input is now: t -> src:ipaddr -> dst:ipaddr -> Cstruct.t -> unit Lwt.t
+- Revise TCP module type
+   - removed type ipinput
+   - removed type listener
+   - add a val listen : t -> port:int -> ?keepalive:Keepalive.t -> (flow -> unit Lwt.t) -> unit
+   - add a val unlisten : t -> port:int -> unit
+   - val input is now: t -> src:ipaddr -> dst:ipaddr -> Cstruct.t -> unit Lwt.t
+
+In #28 by @hannesm
+
 ### v5.0.0 (2020-11-25)
 
 - Retire ipv4_config type and DHCP_CLIENT module type (#27 @hannesm)
