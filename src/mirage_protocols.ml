@@ -50,7 +50,8 @@ end
 module type ETHERNET = sig
   type error = private [> Ethernet.error]
   val pp_error: error Fmt.t
-  include Mirage_device.S
+  type t
+  val disconnect : t -> unit Lwt.t
   val write: t -> ?src:Macaddr.t -> Macaddr.t -> Ethernet.proto -> ?size:int ->
     (Cstruct.t -> int) -> (unit, error) result Lwt.t
   val mac: t -> Macaddr.t
@@ -63,7 +64,8 @@ module type ETHERNET = sig
 end
 
 module type ARP = sig
-  include Mirage_device.S
+  type t
+  val disconnect : t -> unit Lwt.t
   type error = private [> Arp.error]
   val pp_error: error Fmt.t
   val pp : t Fmt.t
@@ -80,7 +82,8 @@ module type IP = sig
   val pp_error: error Fmt.t
   type ipaddr
   val pp_ipaddr : ipaddr Fmt.t
-  include Mirage_device.S
+  type t
+  val disconnect : t -> unit Lwt.t
   type callback = src:ipaddr -> dst:ipaddr -> Cstruct.t -> unit Lwt.t
   val input:
     t ->
@@ -99,7 +102,8 @@ module type IPV4 = IP with type ipaddr = Ipaddr.V4.t
 module type IPV6 = IP with type ipaddr = Ipaddr.V6.t
 
 module type ICMP = sig
-  include Mirage_device.S
+  type t
+  val disconnect : t -> unit Lwt.t
   type ipaddr
   type error
   val pp_error: error Fmt.t
@@ -114,7 +118,8 @@ module type UDP = sig
   type error
   val pp_error: error Fmt.t
   type ipaddr
-  include Mirage_device.S
+  type t
+  val disconnect : t -> unit Lwt.t
   type callback = src:ipaddr -> dst:ipaddr -> src_port:int -> Cstruct.t -> unit Lwt.t
   val listen : t -> port:int -> callback -> unit
   val unlisten : t -> port:int -> unit
@@ -139,7 +144,8 @@ module type TCP = sig
   type write_error = private [> Tcp.write_error]
   type ipaddr
   type flow
-  include Mirage_device.S
+  type t
+  val disconnect : t -> unit Lwt.t
   include Mirage_flow.S with
       type flow   := flow
   and type error  := error

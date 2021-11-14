@@ -1,3 +1,8 @@
+### v7.0.0
+
+* Remove Mirage_protocols_lwt module
+* Remove mirage-device dependency
+
 ### v6.0.0 (2021-11-09)
 
 Simplify UDP and TCP module types to set the stage for an alternative TCP stack,
