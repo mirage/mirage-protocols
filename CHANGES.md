@@ -1,7 +1,7 @@
-### v7.0.0
+### v7.0.0 (2021-11-15)
 
-* Remove Mirage_protocols_lwt module
-* Remove mirage-device dependency
+* Remove Mirage_protocols_lwt module (#29 @hannesm)
+* Remove mirage-device dependency (#29 @hannesm)
 
 ### v6.0.0 (2021-11-09)
 
