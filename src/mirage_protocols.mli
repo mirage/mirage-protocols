@@ -27,7 +27,12 @@ module type ETHERNET = sig
   val pp_error: error Fmt.t
   (** [pp_error] is the pretty-printer for errors. *)
 
-  include Mirage_device.S
+  type t
+  (** The type representing the internal state of the ethernet layer. *)
+
+  val disconnect: t -> unit Lwt.t
+  (** Disconnect from the ethernet layer. While this might take some time to
+      complete, it can never result in an error. *)
 
   val write: t -> ?src:Macaddr.t -> Macaddr.t -> Ethernet.proto -> ?size:int ->
     (Cstruct.t -> int) -> (unit, error) result Lwt.t
@@ -63,7 +68,12 @@ end
 (** Address resolution protocol, translating network addresses (e.g. IPv4)
     into link layer addresses (MAC). *)
 module type ARP = sig
-  include Mirage_device.S
+  type t
+  (** The type representing the internal state of the ARP layer. *)
+
+  val disconnect: t -> unit Lwt.t
+  (** Disconnect from the ARP layer. While this might take some time to
+      complete, it can never result in an error. *)
 
   type error = private [> Arp.error]
   (** The type for ARP errors. *)
@@ -135,7 +145,12 @@ module type IP = sig
   val pp_ipaddr : ipaddr Fmt.t
   (** [pp_ipaddr] is the pretty-printer for IP addresses. *)
 
-  include Mirage_device.S
+  type t
+  (** The type representing the internal state of the IP layer. *)
+
+  val disconnect: t -> unit Lwt.t
+  (** Disconnect from the IP layer. While this might take some time to
+      complete, it can never result in an error. *)
 
   type callback = src:ipaddr -> dst:ipaddr -> Cstruct.t -> unit Lwt.t
   (** An input continuation used by the parsing functions to pass on
@@ -200,7 +215,13 @@ module type IPV6 = IP with type ipaddr = Ipaddr.V6.t
 (** Internet Control Message Protocol: error messages and operational
     information. *)
 module type ICMP = sig
-  include Mirage_device.S
+
+  type t
+  (** The type representing the internal state of the ICMP layer. *)
+
+  val disconnect: t -> unit Lwt.t
+  (** Disconnect from the ICMP layer. While this might take some time to
+      complete, it can never result in an error. *)
 
   type ipaddr
   (** The type for IP addresses. *)
@@ -243,7 +264,12 @@ module type UDP = sig
   type ipaddr
   (** The type for an IP address representations. *)
 
-  include Mirage_device.S
+  type t
+  (** The type representing the internal state of the UDP layer. *)
+
+  val disconnect: t -> unit Lwt.t
+  (** Disconnect from the UDP layer. While this might take some time to
+      complete, it can never result in an error. *)
 
   type callback = src:ipaddr -> dst:ipaddr -> src_port:int -> Cstruct.t -> unit Lwt.t
   (** The type for callback functions that adds the UDP metadata for
@@ -322,7 +348,12 @@ module type TCP = sig
   (** A flow represents the state of a single TCP stream that is connected
       to an endpoint. *)
 
-  include Mirage_device.S
+  type t
+  (** The type representing the internal state of the TCP layer. *)
+
+  val disconnect: t -> unit Lwt.t
+  (** Disconnect from the TCP layer. While this might take some time to
+      complete, it can never result in an error. *)
 
   include Mirage_flow.S with
       type flow   := flow
