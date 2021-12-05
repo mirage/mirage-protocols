@@ -16,13 +16,10 @@ build: [
 depends: [
   "ocaml" {>= "4.08.0"}
   "dune" {>= "1.0"}
-  "mirage-flow" {>= "2.0.0"}
-  "fmt"
-  "duration"
-  "lwt" {>= "4.0.0"}
   "ipaddr" {>= "4.0.0"}
-  "macaddr" {>= "4.0.0"}
-  "cstruct" {>= "6.0.0"}
+  "tcpip" {>= "7.0.0"}
+  "ethernet" {>= "3.0.0"}
+  "arp" {>= "3.0.0"}
 ]
 synopsis: "MirageOS signatures for network protocols"
 description: """

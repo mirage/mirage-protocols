@@ -1,4 +1,4 @@
 (library
  (name mirage_protocols)
  (public_name mirage-protocols)
- (libraries mirage-flow duration fmt cstruct lwt ipaddr macaddr))
+ (libraries ethernet arp.mirage tcpip tcpip.icmpv4 ipaddr))
