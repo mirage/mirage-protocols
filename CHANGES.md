@@ -1,3 +1,8 @@
+### v8.0.0 (2021-12-15)
+
+* Deprecate this package, the module types are now defined by arp (>= 3.0.0),
+  ethernet (>= 3.0.0) and tcpip (>= 7.0.0) (#30 @hannesm)
+
 ### v7.0.0 (2021-11-15)
 
 * Remove Mirage_protocols_lwt module (#29 @hannesm)

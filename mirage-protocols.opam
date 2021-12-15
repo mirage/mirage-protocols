@@ -28,3 +28,6 @@ be used as MirageOS network implementations should implement.
 
 The current signatures are: ETHERNET, ARP, IP, ICMP, UDP, TCP.
 """
+post-messages: [
+  "This package is deprecated. Please use Ethernet.S, Arp.S, or the Tcpip module types directly"
+]
